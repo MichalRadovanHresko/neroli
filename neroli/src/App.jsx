@@ -1,5 +1,7 @@
+import BottomNav from "./components/BottomNav";
+
 const App = () => {
-  return <div>Hello World</div>;
+  return <BottomNav />;
 };
 
 export default App;
