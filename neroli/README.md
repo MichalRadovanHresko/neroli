@@ -5,6 +5,6 @@
 - sign up sign in logic/pages []
 - database with scents connected to app []
 - chatbot ai assistent []
-- smooth bottom nav bar []
+- smooth bottom nav bar [X]
 - 3D model bottle customization []
 - overall design []

@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+:root {
+    --primary-color: #221B04;
+    --secondary-color: #000000;
+    --container-background: #D6D2C6;
+    --background-color: #B0AEA6;
+}
+
+body {
+    background-color: var(--background-color);
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: "Aboreto", sans-serif;
+}
+
 .liquid-glass {
   background: rgba(255, 255, 255, 0.12);
   -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
