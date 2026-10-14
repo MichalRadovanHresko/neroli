@@ -1,7 +1,7 @@
-import BottomNav from "./components/BottomNav";
+import AppRoutes from "./routes";
 
 const App = () => {
-  return <BottomNav />;
+  return <AppRoutes />;
 };
 
 export default App;

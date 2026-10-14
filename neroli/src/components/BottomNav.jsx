@@ -1,19 +1,25 @@
 import { useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AddIcon, HomeIcon, ProfileIcon, ScentsIcon, ShopIcon } from "./Icons";
 
 const BottomNav = () => {
   const TABS = [
-    { id: "home", label: "Home", Icon: HomeIcon },
-    { id: "scents", label: "Scents", Icon: ScentsIcon },
-    { id: "add", label: "Add", Icon: AddIcon },
-    { id: "shop", label: "Shop", Icon: ShopIcon },
-    { id: "profile", label: "Profile", Icon: ProfileIcon },
+    { id: "home", path: "/", label: "Home", Icon: HomeIcon },
+    { id: "scents", path: "/scents", label: "Scents", Icon: ScentsIcon },
+    { id: "add", path: "/add", label: "Add", Icon: AddIcon },
+    { id: "shop", path: "/shop", label: "Shop", Icon: ShopIcon },
+    { id: "profile", path: "/profile", label: "Profile", Icon: ProfileIcon },
   ];
-  const [tab, setTab] = useState("home");
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [pressed, setPressed] = useState(false);
-  const index = TABS.findIndex((t) => t.id === tab);
+  const found = TABS.findIndex((t) => t.path === pathname);
+  const index = Math.max(found, 0);
+  const tab = TABS[index].id;
   return (
     <div className="min-h-screen pb-28">
+      <Outlet />
+
       <svg className="hidden" aria-hidden="true">
         <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
           <feTurbulence
@@ -47,7 +53,7 @@ const BottomNav = () => {
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => navigate(t.path)}
             onPointerDown={() => setPressed(true)}
             onPointerUp={() => setPressed(false)}
             onPointerLeave={() => setPressed(false)}
