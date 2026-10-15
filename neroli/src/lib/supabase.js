@@ -7,6 +7,12 @@ if (!url || !key) {
   throw new Error("Missing Supabase environment variables");
 }
 
-const supabase = createClient(url, key);
+const supabase = createClient(url, key, {
+  auth: {
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    persistSession: true,
+  },
+});
 
 export default supabase;
