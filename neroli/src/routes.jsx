@@ -6,6 +6,7 @@ import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Scents from "./pages/Scents";
+import ScentDetail from "./pages/ScentDetail";
 import Shop from "./pages/Shop";
 
 const AppRoutes = () => {
@@ -17,6 +18,7 @@ const AppRoutes = () => {
         <Route element={<BottomNav />}>
           <Route index element={<Home />} />
           <Route path="scents" element={<Scents />} />
+          <Route path="scents/:id" element={<ScentDetail />} />
           <Route path="add" element={<Add />} />
           <Route path="shop" element={<Shop />} />
           <Route path="profile" element={<Profile />} />
