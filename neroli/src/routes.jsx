@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom";
-import BottomNav from "./components/BottomNav";
+import AppLayout from "./components/AppLayout";
 import RequireAuth from "./components/RequireAuth";
 import Add from "./pages/Add";
 import Auth from "./pages/Auth";
@@ -15,7 +15,7 @@ const AppRoutes = () => {
       <Route path="signup" element={<Auth mode="signup" />} />
       <Route path="signin" element={<Auth mode="signin" />} />
       <Route element={<RequireAuth />}>
-        <Route element={<BottomNav />}>
+        <Route element={<AppLayout />}>
           <Route index element={<Home />} />
           <Route path="scents" element={<Scents />} />
           <Route path="scents/:id" element={<ScentDetail />} />

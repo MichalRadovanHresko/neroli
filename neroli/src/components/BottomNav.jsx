@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AddIcon, HomeIcon, ProfileIcon, ScentsIcon, ShopIcon } from "./Icons";
 
 const BottomNav = () => {
@@ -13,13 +13,15 @@ const BottomNav = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [pressed, setPressed] = useState(false);
-  const found = TABS.findIndex((t) => t.path === pathname);
+  const found = TABS.findIndex(
+    (t) =>
+      t.path === pathname ||
+      (t.id === "scents" && pathname.startsWith(`${t.path}/`)),
+  );
   const index = Math.max(found, 0);
   const tab = TABS[index].id;
   return (
-    <div className="min-h-screen pb-28">
-      <Outlet />
-
+    <>
       <svg className="hidden" aria-hidden="true">
         <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
           <feTurbulence
@@ -40,7 +42,10 @@ const BottomNav = () => {
         </filter>
       </svg>
 
-      <nav className="liquid-glass fixed bottom-4 left-1/2 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-full p-2">
+      <nav
+        aria-label="Main navigation"
+        className="liquid-glass fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-full p-2"
+      >
         <span
           aria-hidden="true"
           className="liquid-glass-active pointer-events-none absolute inset-y-2 left-2 rounded-full"
@@ -57,8 +62,12 @@ const BottomNav = () => {
             onPointerDown={() => setPressed(true)}
             onPointerUp={() => setPressed(false)}
             onPointerLeave={() => setPressed(false)}
-            className={`relative flex flex-1 flex-col items-center gap-1 rounded-full px-2 py-2 text-xs transition-colors ${
-              tab === t.id ? "font-semibold text-black" : "text-black/60"
+            type="button"
+            aria-current={tab === t.id ? "page" : undefined}
+            className={`relative z-10 flex flex-1 flex-col items-center gap-1 rounded-full px-2 py-2 text-xs transition-colors ${
+              tab === t.id
+                ? "font-semibold text-black"
+                : "text-black/60"
             }`}
           >
             <span className="flex h-6 w-6 items-center justify-center">
@@ -68,7 +77,7 @@ const BottomNav = () => {
           </button>
         ))}
       </nav>
-    </div>
+    </>
   );
 };
 
