@@ -88,10 +88,10 @@ const ScentDetail = () => {
       <Link
         className="mb-6 inline-flex items-center gap-2 text-sm"
         to="/scents"
-        aria-label="Back to scents"
+        aria-label="Back to Explore"
       >
         <LuArrowLeft className="size-4" aria-hidden="true" />
-        Scents
+        Explore
       </Link>
 
       {loading && <p className="text-sm text-[#221B04]/70">Loading scent...</p>}
@@ -142,10 +142,6 @@ const ScentDetail = () => {
               <div>
                 <dt className="text-xs text-[#221B04]/60">Size</dt>
                 <dd className="mt-1 text-sm">{scent.size} ml</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-[#221B04]/60">Price</dt>
-                <dd className="mt-1 text-sm">{scent.price} kr</dd>
               </div>
             </dl>
           </div>

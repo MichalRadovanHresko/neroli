@@ -28,15 +28,6 @@ const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const signUpNewUser = (email, password, username) =>
-    supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username: username.trim() },
-      },
-    });
-
   const signInUser = (email, password) =>
     supabase.auth.signInWithPassword({ email, password });
 
@@ -46,9 +37,7 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider
-      value={{ session, loading, signUpNewUser, signInUser, signOut }}
-    >
+    <AuthContext.Provider value={{ session, loading, signInUser, signOut }}>
       {children}
     </AuthContext.Provider>
   );

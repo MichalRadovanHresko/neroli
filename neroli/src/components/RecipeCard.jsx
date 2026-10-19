@@ -5,7 +5,6 @@ export default function RecipeCard({
   size,
   scent_family,
   note_type,
-  price,
   short_description,
 }) {
   return (
@@ -21,7 +20,6 @@ export default function RecipeCard({
       <div className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-3">
           <h2 className="font-scent text-2xl leading-tight">{name}</h2>
-          <span className="shrink-0 text-sm">{price} kr</span>
         </div>
         <p className="text-sm text-[#221B04]/75">
           {scent_family}, {note_type}

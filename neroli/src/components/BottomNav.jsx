@@ -5,7 +5,7 @@ import { AddIcon, HomeIcon, ProfileIcon, ScentsIcon, ShopIcon } from "./Icons";
 const BottomNav = () => {
   const TABS = [
     { id: "home", path: "/", label: "Home", Icon: HomeIcon },
-    { id: "scents", path: "/scents", label: "Scents", Icon: ScentsIcon },
+    { id: "scents", path: "/scents", label: "Explore", Icon: ScentsIcon },
     { id: "add", path: "/add", label: "Add", Icon: AddIcon },
     { id: "shop", path: "/shop", label: "Shop", Icon: ShopIcon },
     { id: "profile", path: "/profile", label: "Profile", Icon: ProfileIcon },
@@ -65,9 +65,7 @@ const BottomNav = () => {
             type="button"
             aria-current={tab === t.id ? "page" : undefined}
             className={`relative z-10 flex flex-1 flex-col items-center gap-1 rounded-full px-2 py-2 text-xs transition-colors ${
-              tab === t.id
-                ? "font-semibold text-black"
-                : "text-black/60"
+              tab === t.id ? "font-semibold text-black" : "text-black/60"
             }`}
           >
             <span className="flex h-6 w-6 items-center justify-center">
