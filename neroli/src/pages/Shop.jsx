@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { LuArrowUpRight, LuSearch, LuSlidersHorizontal } from "react-icons/lu";
 
+import scentImage from "../assets/images/shop/scent.png";
 import { PRODUCTS } from "../lib/shopProducts";
 import supabase from "../lib/supabase";
 
