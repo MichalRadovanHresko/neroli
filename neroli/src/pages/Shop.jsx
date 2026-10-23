@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { LuArrowUpRight, LuSearch, LuSlidersHorizontal } from "react-icons/lu";
 
-import beakerImage from "../assets/images/shop/baker.png";
-import glassesImage from "../assets/images/shop/glasses.jpg";
-import pipetteImage from "../assets/images/shop/pippet.jpg";
-import scaleImage from "../assets/images/shop/scale.png";
-import scentImage from "../assets/images/shop/scent.png";
+import { PRODUCTS } from "../lib/shopProducts";
 import supabase from "../lib/supabase";
 
 const CATEGORIES = [
@@ -13,30 +9,6 @@ const CATEGORIES = [
   "Essential oils",
   "Tools & Accessories",
   "Fragrance",
-];
-
-const PRODUCTS = [
-  {
-    name: "Pipette Dropper",
-    image: pipetteImage,
-    purchaseUrl: "https://www.bulkapothecary.com/pipette-dropper/",
-  },
-  {
-    name: "Measuring Beakers",
-    image: beakerImage,
-    purchaseUrl: "https://www.bulkapothecary.com/measuring-beakers/",
-  },
-  {
-    name: "Safety Glasses",
-    image: glassesImage,
-    purchaseUrl: "https://www.bulkapothecary.com/safety-glasses/",
-  },
-  {
-    name: "Scale",
-    image: scaleImage,
-    purchaseUrl:
-      "https://www.bulkapothecary.com/compact-digital-platform-scale/",
-  },
 ];
 
 const getPurchaseUrl = (product) => {
