@@ -70,6 +70,23 @@ const Explore = () => {
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [filter, setFilter] = useState("All");
   const [sort, setSort] = useState("newest");
+  const [scents, setScents] = useState([]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    supabase
+      .from("scents")
+      .select("id, name, image_url, scent_family, short_description")
+      .order("name", { ascending: true })
+      .then(({ data, error: scentsError }) => {
+        if (isCurrent && !scentsError) setScents(data ?? []);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -120,6 +137,16 @@ const Explore = () => {
     .filter(matchesFilters)
     .sort((a, b) => (sort === "name" ? a.name.localeCompare(b.name) : 0));
   const visibleMyRecipes = myRecipes.filter(matchesFilters);
+
+  const matchesScent = (scent, text) =>
+    [scent.name, scent.scent_family, scent.short_description]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(text));
+  const visibleScents = scents.filter(
+    (scent) =>
+      (filter === "All" || matchesScent(scent, filter.toLowerCase())) &&
+      (!searchText || matchesScent(scent, searchText)),
+  );
 
   const featuredImage = featured && getRecipeImage(featured, resolveIngredient);
 
@@ -296,6 +323,36 @@ const Explore = () => {
                 ))}
               </ul>
             )}
+          </section>
+        )}
+
+        {visibleScents.length > 0 && (
+          <section className="mt-10" aria-label="Scents">
+            <h2 className="text-lg font-medium">Scents</h2>
+            <ul className="mt-4 grid grid-cols-3 gap-x-3 gap-y-4">
+              {visibleScents.map((scent) => (
+                <li className="min-w-0" key={scent.id}>
+                  <Link
+                    className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
+                    to={`/scents/${scent.id}`}
+                  >
+                    <div className="aspect-square overflow-hidden rounded-[18px] bg-[#D6D2C6]">
+                      {scent.image_url && (
+                        <img
+                          className="size-full object-cover"
+                          src={scent.image_url}
+                          alt=""
+                          loading="lazy"
+                        />
+                      )}
+                    </div>
+                    <p className="mt-2 truncate text-center text-xs">
+                      {scent.name}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </div>

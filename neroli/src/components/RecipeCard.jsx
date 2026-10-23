@@ -2,7 +2,6 @@ export default function RecipeCard({
   image_url,
   name,
   intensity,
-  size,
   scent_family,
   note_type,
   short_description,
@@ -25,9 +24,7 @@ export default function RecipeCard({
           {scent_family}, {note_type}
         </p>
         <p className="text-sm text-[#221B04]/75">{short_description}</p>
-        <p className="text-xs text-[#221B04]/60">
-          {intensity}, {size} ml
-        </p>
+        <p className="text-xs text-[#221B04]/60">{intensity}</p>
       </div>
     </article>
   );

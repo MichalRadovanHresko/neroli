@@ -130,7 +130,7 @@ const ScentDetail = () => {
                 {scent.short_description}
               </p>
             )}
-            <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-[#221B04]/15 pt-6 sm:grid-cols-3">
+            <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-[#221B04]/15 pt-6">
               <div>
                 <dt className="text-xs text-[#221B04]/60">Note</dt>
                 <dd className="mt-1 text-sm">{scent.note_type}</dd>
@@ -138,10 +138,6 @@ const ScentDetail = () => {
               <div>
                 <dt className="text-xs text-[#221B04]/60">Intensity</dt>
                 <dd className="mt-1 text-sm">{scent.intensity}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-[#221B04]/60">Size</dt>
-                <dd className="mt-1 text-sm">{scent.size} ml</dd>
               </div>
             </dl>
           </div>
