@@ -5,10 +5,12 @@ import Header from "./Header";
 const AppLayout = () => {
   const { pathname } = useLocation();
 
+  const hideHeader = pathname === "/profile";
+
   return (
     <div className="min-h-screen pb-28">
-      <Header />
-      <div className={pathname === "/" ? "" : "pt-22"}>
+      {!hideHeader && <Header />}
+      <div className={pathname === "/" || hideHeader ? "" : "pt-22"}>
         <Outlet />
       </div>
       <BottomNav />

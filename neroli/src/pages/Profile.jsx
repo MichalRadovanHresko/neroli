@@ -30,7 +30,7 @@ const Stat = ({ value, label }) => (
 const RecipeRow = ({ recipe, image, caption }) => (
   <Link
     className="flex items-center gap-4 rounded-2xl bg-[#F7F5F0] p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
-    to={`/recipes/${recipe.id}`}
+    to={`/recipes/${recipe.id}${recipe.isPremium ? "?premium=1" : ""}`}
   >
     <span className="block size-24 shrink-0 overflow-hidden rounded-xl bg-[#D6D2C6]">
       {image && (
@@ -73,9 +73,7 @@ const Profile = () => {
       const [savedResult, ownResult, commentResult] = await Promise.all([
         supabase
           .from("recipe_saves")
-          .select(
-            "created_at, recipe:recipes (id, name, image_url, ingredients)",
-          )
+          .select("created_at, recipe_id")
           .eq("user_id", userId)
           .order("created_at", { ascending: false }),
         supabase
@@ -90,10 +88,33 @@ const Profile = () => {
       ]);
 
       if (!isCurrent) return;
+
+      const savedRows = savedResult.data ?? [];
+      const savedIds = savedRows.map((row) => row.recipe_id);
+      const columns = "id, name, image_url, ingredients";
+      const [normalResult, premiumResult] = savedIds.length
+        ? await Promise.all([
+            supabase.from("recipes").select(columns).in("id", savedIds),
+            supabase.from("premium_recipes").select(columns).in("id", savedIds),
+          ])
+        : [{ data: [] }, { data: [] }];
+
+      if (!isCurrent) return;
+      const recipesById = new Map([
+        ...(normalResult.data ?? []).map((item) => [item.id, item]),
+        ...(premiumResult.data ?? []).map((item) => [
+          item.id,
+          { ...item, isPremium: true },
+        ]),
+      ]);
+      const savedWithRecipes = savedRows
+        .map((row) => ({ ...row, recipe: recipesById.get(row.recipe_id) }))
+        .filter((row) => row.recipe);
+
       const firstError =
         savedResult.error || ownResult.error || commentResult.error;
       if (firstError) setError(firstError.message);
-      setSaved((savedResult.data ?? []).filter((row) => row.recipe));
+      setSaved(savedWithRecipes);
       setOwnRecipes(ownResult.data ?? []);
       setCommentCount(commentResult.count ?? 0);
       setLoading(false);
