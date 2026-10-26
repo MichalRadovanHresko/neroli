@@ -16,7 +16,8 @@ const BottomNav = () => {
       t.path === pathname ||
       (t.id === "scents" &&
         (pathname.startsWith(`${t.path}/`) ||
-          pathname.startsWith("/recipes/"))),
+          pathname.startsWith("/recipes/") ||
+          pathname.startsWith("/explore/"))),
   );
   const index = Math.max(found, 0);
   const tab = TABS[index].id;
