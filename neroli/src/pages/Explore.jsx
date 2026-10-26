@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { LuArrowLeft, LuChevronDown, LuSearch } from "react-icons/lu";
+import { LuArrowLeft, LuChevronDown, LuFilter, LuSearch } from "react-icons/lu";
 import supabase from "../lib/supabase";
 import { useScents } from "../lib/scents";
 import { useAuth } from "../context/AuthContext.js";
@@ -33,12 +33,14 @@ const matchesText = (recipe, text) =>
     .filter(Boolean)
     .some((value) => value.toLowerCase().includes(text));
 
-const RecipeRow = ({ recipe, image }) => (
+const ListRow = ({ to, image, title, subtitle, dark = false }) => (
   <Link
-    className="flex items-center gap-4 rounded-2xl bg-[#F7F5F0] p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
-    to={`/recipes/${recipe.id}`}
+    className={`flex items-center gap-4 rounded-[20px] p-2.5 shadow-[0_2px_6px_rgba(34,27,4,0.06)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04] ${
+      dark ? "bg-[#D6D0C0]" : "bg-[#F7F5F0]"
+    }`}
+    to={to}
   >
-    <div className="size-24 shrink-0 overflow-hidden rounded-xl bg-[#D6D2C6]">
+    <div className="size-24 shrink-0 overflow-hidden rounded-2xl bg-[#D6D2C6]">
       {image && (
         <img
           className="size-full object-cover"
@@ -49,13 +51,29 @@ const RecipeRow = ({ recipe, image }) => (
       )}
     </div>
     <div className="min-w-0">
-      <h3 className="truncate text-sm font-semibold">{recipe.name}</h3>
-      <p className="mt-2 text-xs text-[#696555]">
-        {getIngredientNames(recipe).join(" ")}
-      </p>
+      <h3 className="truncate text-[15px] font-semibold">{title}</h3>
+      <p className="mt-2 line-clamp-2 text-xs text-[#696555]">{subtitle}</p>
     </div>
   </Link>
 );
+
+const SectionHeading = ({ title, action }) => (
+  <div className="flex items-baseline justify-between gap-4">
+    <h2 className="text-xl font-medium">{title}</h2>
+    {action}
+  </div>
+);
+
+const SeeAll = ({ type, query }) => (
+  <Link
+    className="shrink-0 border-b border-[#221B04] text-xs"
+    to={`/explore/all?type=${type}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+  >
+    See all
+  </Link>
+);
+
+const PREVIEW_COUNT = 3;
 
 const Explore = () => {
   const navigate = useNavigate();
@@ -71,6 +89,7 @@ const Explore = () => {
   const [filter, setFilter] = useState("All");
   const [sort, setSort] = useState("newest");
   const [scents, setScents] = useState([]);
+  const [premiumRecipes, setPremiumRecipes] = useState([]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -94,7 +113,7 @@ const Explore = () => {
     const loadRecipes = async () => {
       const columns =
         "id, name, image_url, short_description, badges, profile_tags, ingredients, created_at";
-      const [premadeResult, mineResult] = await Promise.all([
+      const [premadeResult, mineResult, premiumResult] = await Promise.all([
         supabase
           .from("recipes")
           .select(columns)
@@ -108,6 +127,10 @@ const Explore = () => {
               .eq("is_premade", false)
               .order("created_at", { ascending: false })
           : Promise.resolve({ data: [], error: null }),
+        supabase
+          .from("premium_recipes")
+          .select(columns)
+          .order("created_at", { ascending: false }),
       ]);
 
       if (!isCurrent) return;
@@ -116,6 +139,9 @@ const Explore = () => {
       else {
         setRecipes(premadeResult.data ?? []);
         setMyRecipes(mineResult.data ?? []);
+        setPremiumRecipes(
+          premiumResult.error ? [] : (premiumResult.data ?? []),
+        );
       }
       setLoading(false);
     };
@@ -126,7 +152,7 @@ const Explore = () => {
     };
   }, [userId]);
 
-  const featured = recipes[0];
+  const featured = premiumRecipes[0];
   const searchText = query.trim().toLowerCase();
 
   const matchesFilters = (recipe) =>
@@ -136,6 +162,7 @@ const Explore = () => {
   const visibleRecipes = recipes
     .filter(matchesFilters)
     .sort((a, b) => (sort === "name" ? a.name.localeCompare(b.name) : 0));
+  const visiblePremium = premiumRecipes.filter(matchesFilters);
   const visibleMyRecipes = myRecipes.filter(matchesFilters);
 
   const matchesScent = (scent, text) =>
@@ -149,6 +176,13 @@ const Explore = () => {
   );
 
   const featuredImage = featured && getRecipeImage(featured, resolveIngredient);
+  const shownRecipes = visibleRecipes.slice(0, PREVIEW_COUNT);
+  const shownScents = visibleScents.slice(0, PREVIEW_COUNT);
+  const shownPremium = visiblePremium.slice(0, PREVIEW_COUNT);
+  const shownMyRecipes = visibleMyRecipes.slice(0, PREVIEW_COUNT);
+  const sortLabel = SORTS.find((option) => option.id === sort)?.label;
+  const toggleSort = () =>
+    setSort((current) => (current === "newest" ? "name" : "newest"));
 
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-4 pb-36 pt-5 text-[#221B04] sm:px-10">
@@ -163,7 +197,15 @@ const Explore = () => {
             <LuArrowLeft className="size-5" aria-hidden="true" />
           </button>
           <h1 className="text-center text-base font-medium">Explore</h1>
-          <span aria-hidden="true" />
+          <button
+            className="grid size-10 place-items-center rounded-full bg-[#F7F5F0]"
+            type="button"
+            onClick={toggleSort}
+            aria-label={`Sort recipes: ${sortLabel}. Press to change`}
+            title={`Sort: ${sortLabel}`}
+          >
+            <LuFilter className="size-5" aria-hidden="true" />
+          </button>
         </header>
 
         <label className="mt-5 flex h-11 items-center gap-3 rounded-full bg-[#F7F5F0] px-4 shadow-[0_2px_8px_rgba(34,27,4,0.08)]">
@@ -212,24 +254,15 @@ const Explore = () => {
           </p>
         )}
 
-        {!loading && !error && featured && (
+        {!loading && !error && featured && !searchText && (
           <section className="mt-6" aria-label="Neroli's selection">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-lg font-medium">Neroli’s selection</h2>
-              <button
-                className="border-b border-[#221B04] text-xs"
-                type="button"
-                onClick={() => {
-                  setFilter("All");
-                  setQuery("");
-                }}
-              >
-                See all
-              </button>
-            </div>
+            <SectionHeading
+              title="Neroli’s Premium selection"
+              action={<SeeAll type="premium" />}
+            />
             <Link
               className="relative mt-4 block aspect-[0.9] w-full overflow-hidden rounded-[28px] bg-[#696555] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
-              to={`/recipes/${featured.id}`}
+              to={`/recipes/${featured.id}?premium=1`}
             >
               {featuredImage && (
                 <img
@@ -259,102 +292,132 @@ const Explore = () => {
           </section>
         )}
 
-        {!loading && !error && userId && (
-          <section className="mt-10" aria-label="My recipes">
-            <h2 className="text-lg font-medium">My recipes</h2>
-            {visibleMyRecipes.length === 0 ? (
-              <p className="mt-4 text-sm text-[#221B04]/70">
-                {myRecipes.length === 0
-                  ? "You have no recipes yet. Create one in Add."
-                  : "None of your recipes match."}
-              </p>
-            ) : (
+        <div className="flex flex-col">
+          {!loading && !error && searchText && visiblePremium.length > 0 && (
+            <section className="order-0 mt-10" aria-label="Premium recipes">
+              <SectionHeading
+                title="Premium recipes"
+                action={
+                  visiblePremium.length > PREVIEW_COUNT && (
+                    <SeeAll type="premium" query={searchText} />
+                  )
+                }
+              />
               <ul className="mt-4 space-y-3">
-                {visibleMyRecipes.map((recipe) => (
+                {shownPremium.map((recipe) => (
                   <li key={recipe.id}>
-                    <RecipeRow
-                      recipe={recipe}
+                    <ListRow
+                      to={`/recipes/${recipe.id}?premium=1`}
                       image={getRecipeImage(recipe, resolveIngredient)}
+                      title={recipe.name}
+                      subtitle={getIngredientNames(recipe).join(" ")}
                     />
                   </li>
                 ))}
               </ul>
-            )}
-          </section>
-        )}
+            </section>
+          )}
 
-        {!loading && !error && (
-          <section className="mt-10" aria-label="All recipes">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-lg font-medium">All recipes</h2>
-              <label className="relative flex items-center gap-1 text-xs">
-                <span className="sr-only">Sort recipes</span>
-                <select
-                  className="cursor-pointer appearance-none bg-transparent pr-5 underline outline-none"
-                  value={sort}
-                  onChange={(event) => setSort(event.target.value)}
-                >
-                  {SORTS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <LuChevronDown
-                  className="pointer-events-none absolute right-0 size-4"
-                  aria-hidden="true"
+          {!loading &&
+            !error &&
+            userId &&
+            (searchText ? visibleMyRecipes.length > 0 : true) && (
+              <section
+                className={`mt-10 ${searchText ? "order-2" : "order-0"}`}
+                aria-label="My recipes"
+              >
+                <SectionHeading
+                  title="My recipes"
+                  action={
+                    visibleMyRecipes.length > PREVIEW_COUNT && (
+                      <SeeAll type="mine" query={searchText} />
+                    )
+                  }
                 />
-              </label>
-            </div>
+                {visibleMyRecipes.length === 0 ? (
+                  <p className="mt-4 text-sm text-[#221B04]/70">
+                    {myRecipes.length === 0
+                      ? "You have no recipes yet. Create one in Add."
+                      : "None of your recipes match."}
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-3">
+                    {shownMyRecipes.map((recipe) => (
+                      <li key={recipe.id}>
+                        <ListRow
+                          to={`/recipes/${recipe.id}`}
+                          image={getRecipeImage(recipe, resolveIngredient)}
+                          title={recipe.name}
+                          subtitle={getIngredientNames(recipe).join(" ")}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
 
-            {visibleRecipes.length === 0 ? (
-              <p className="mt-6 text-sm text-[#221B04]/70">
-                No recipes found.
-              </p>
-            ) : (
+          {!loading && !error && (
+            <section
+              className={`mt-12 ${"order-1"}`}
+              aria-label="Community recipes"
+            >
+              <SectionHeading
+                title="Community recipes"
+                action={
+                  visibleRecipes.length > PREVIEW_COUNT && (
+                    <SeeAll type="community" query={searchText} />
+                  )
+                }
+              />
+
+              {visibleRecipes.length === 0 ? (
+                <p className="mt-6 text-sm text-[#221B04]/70">
+                  No recipes found.
+                </p>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {shownRecipes.map((recipe) => (
+                    <li key={recipe.id}>
+                      <ListRow
+                        to={`/recipes/${recipe.id}`}
+                        image={getRecipeImage(recipe, resolveIngredient)}
+                        title={recipe.name}
+                        subtitle={getIngredientNames(recipe).join(" ")}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {visibleScents.length > 0 && (
+            <section className="order-3 mt-12" aria-label="Explore scents">
+              <SectionHeading
+                title="Explore scents"
+                action={
+                  visibleScents.length > PREVIEW_COUNT && (
+                    <SeeAll type="scents" query={searchText} />
+                  )
+                }
+              />
               <ul className="mt-4 space-y-3">
-                {visibleRecipes.map((recipe) => (
-                  <li key={recipe.id}>
-                    <RecipeRow
-                      recipe={recipe}
-                      image={getRecipeImage(recipe, resolveIngredient)}
+                {shownScents.map((scent) => (
+                  <li key={scent.id}>
+                    <ListRow
+                      dark
+                      to={`/scents/${scent.id}`}
+                      image={scent.image_url}
+                      title={scent.name}
+                      subtitle={scent.short_description || scent.scent_family}
                     />
                   </li>
                 ))}
               </ul>
-            )}
-          </section>
-        )}
-
-        {visibleScents.length > 0 && (
-          <section className="mt-10" aria-label="Scents">
-            <h2 className="text-lg font-medium">Scents</h2>
-            <ul className="mt-4 grid grid-cols-3 gap-x-3 gap-y-4">
-              {visibleScents.map((scent) => (
-                <li className="min-w-0" key={scent.id}>
-                  <Link
-                    className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
-                    to={`/scents/${scent.id}`}
-                  >
-                    <div className="aspect-square overflow-hidden rounded-[18px] bg-[#D6D2C6]">
-                      {scent.image_url && (
-                        <img
-                          className="size-full object-cover"
-                          src={scent.image_url}
-                          alt=""
-                          loading="lazy"
-                        />
-                      )}
-                    </div>
-                    <p className="mt-2 truncate text-center text-xs">
-                      {scent.name}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+            </section>
+          )}
+        </div>
       </div>
     </main>
   );

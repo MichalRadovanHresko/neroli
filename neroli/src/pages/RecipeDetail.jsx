@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { LuArrowLeft, LuPencil, LuTrash2 } from "react-icons/lu";
 import { useAuth } from "../context/AuthContext.js";
 import supabase from "../lib/supabase";
@@ -35,16 +40,9 @@ function SaveIcon({ filled }) {
   );
 }
 
-const PREMADE_PROFILE_FIELDS = [
+const PREMIUM_PROFILE_FIELDS = [
   { id: "intensity", label: "Intensity" },
   { id: "note", label: "Note" },
-  { id: "fresh", label: "Fresh" },
-];
-
-const OWN_PROFILE_FIELDS = [
-  { id: "intensity", label: "Intensity" },
-  { id: "sweet", label: "Sweet" },
-  { id: "warm", label: "Warm" },
   { id: "fresh", label: "Fresh" },
 ];
 
@@ -100,6 +98,8 @@ const Card = ({ title, children }) => (
 
 const RecipeDetail = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const isPremium = searchParams.get("premium") === "1";
   const navigate = useNavigate();
   const [userComments, setUserComments] = useState([]);
   const [commentText, setCommentText] = useState("");
@@ -156,7 +156,7 @@ const RecipeDetail = () => {
 
     const loadRecipe = async () => {
       const { data, error: queryError } = await supabase
-        .from("recipes")
+        .from(isPremium ? "premium_recipes" : "recipes")
         .select("*")
         .eq("id", id)
         .maybeSingle();
@@ -172,7 +172,7 @@ const RecipeDetail = () => {
     return () => {
       isCurrent = false;
     };
-  }, [id]);
+  }, [id, isPremium]);
 
   const backButton = (
     <button
@@ -254,7 +254,7 @@ const RecipeDetail = () => {
     );
   }
 
-  const isOwner = !recipe.is_premade && recipe.user_id === userId;
+  const isOwner = !isPremium && !recipe.is_premade && recipe.user_id === userId;
 
   const deleteRecipe = async () => {
     if (!window.confirm("Delete this recipe? This cannot be undone.")) return;
@@ -290,7 +290,7 @@ const RecipeDetail = () => {
 
   return (
     <main className="min-h-screen bg-[#EAE3D6] pb-36 text-[#221B04]">
-      <header className="relative flex min-h-80 flex-col justify-end overflow-hidden bg-[#696555] px-5 pb-6 text-white">
+      <header className="relative flex min-h-[380px] flex-col justify-end overflow-hidden bg-[#696555] px-5 pb-6 text-white">
         {heroImage && (
           <img
             className="absolute inset-0 size-full object-cover"
@@ -299,7 +299,7 @@ const RecipeDetail = () => {
             fetchPriority="high"
           />
         )}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(34,27,4,0.1)_0%,rgba(34,27,4,0.65)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(34,27,4,0)_0%,rgba(34,27,4,0.45)_100%)]" />
         {backButton}
         <button
           className="absolute right-4 top-5 z-10 grid size-10 place-items-center rounded-full bg-[#F7F5F0] text-black disabled:opacity-60"
@@ -313,7 +313,13 @@ const RecipeDetail = () => {
         </button>
         <div className="relative">
           <div className="flex flex-wrap gap-2">
-            {(recipe.badges ?? []).map((badge) => (
+            {[
+              isPremium ? "Premium" : "Community",
+              ...(recipe.badges ?? []).filter(
+                (badge) =>
+                  !["premium", "community"].includes(badge.toLowerCase()),
+              ),
+            ].map((badge) => (
               <span
                 className="rounded-full bg-[#F7F5F0] px-3 py-1 text-xs text-[#221B04]"
                 key={badge}
@@ -334,57 +340,48 @@ const RecipeDetail = () => {
       </header>
 
       <div className="mx-auto max-w-3xl space-y-4 px-5 pt-5">
-        <Card title="Scent profile">
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(recipe.profile_tags ?? []).map((tag) => (
-              <span
-                className="rounded-full bg-[#F7F5F0] px-4 py-1.5 text-xs"
-                key={tag}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div className="mt-4 space-y-3">
-            {(recipe.is_premade
-              ? PREMADE_PROFILE_FIELDS
-              : OWN_PROFILE_FIELDS
-            )
-              .filter((field) => typeof profile[field.id] === "number")
-              .map((field) => (
-              <div
-                className="grid grid-cols-[56px_minmax(0,1fr)_42px] items-center gap-3 text-xs text-[#696555]"
-                key={field.id}
-              >
-                <span>{field.label}</span>
-                <input
-                  className="h-1 w-full accent-[#221B04]"
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={profile[field.id]}
-                  disabled
-                  readOnly
-                  aria-label={field.label}
-                />
-                <span className="text-right">{profile[field.id]}%</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+        {isPremium && (
+          <Card title="Scent profile">
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(recipe.profile_tags ?? []).map((tag) => (
+                <span
+                  className="rounded-full bg-[#F7F5F0] px-4 py-1.5 text-xs"
+                  key={tag}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="mt-4 space-y-3">
+              {PREMIUM_PROFILE_FIELDS.filter(
+                (field) => typeof profile[field.id] === "number",
+              ).map((field) => (
+                <div
+                  className="grid grid-cols-[56px_minmax(0,1fr)_42px] items-center gap-3 text-xs text-[#696555]"
+                  key={field.id}
+                >
+                  <span>{field.label}</span>
+                  <input
+                    className="h-1 w-full accent-[#221B04]"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={profile[field.id]}
+                    disabled
+                    readOnly
+                    aria-label={field.label}
+                  />
+                  <span className="text-right">{profile[field.id]}%</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {recipe.about && (
           <Card title="About this recipe">
             <p className="mt-3 text-sm leading-relaxed text-[#696555]">
               {recipe.about}
-            </p>
-          </Card>
-        )}
-
-        {!recipe.is_premade && recipe.notes && (
-          <Card title="Notes">
-            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-[#696555]">
-              {recipe.notes}
             </p>
           </Card>
         )}
@@ -398,37 +395,6 @@ const RecipeDetail = () => {
         {equipment.length > 0 && (
           <Card title="Equipment">
             <ItemGrid items={equipment} />
-          </Card>
-        )}
-
-        {pairedScents.length > 0 && (
-          <Card title="Pairs well with">
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              {pairedScents.map((scent) => (
-                <Link className="min-w-0" key={scent.id} to={`/scents/${scent.id}`}>
-                  <div className="aspect-square overflow-hidden rounded-[20px] bg-[#D6D2C6]">
-                    {scent.image_url && (
-                      <img className="size-full object-cover" src={scent.image_url} alt={scent.name} />
-                    )}
-                  </div>
-                  <p className="mt-2 truncate text-center text-xs text-[#696555]">{scent.name}</p>
-                </Link>
-              ))}
-            </div>
-          </Card>
-        )}
-
-        {media.length > 0 && (
-          <Card title="Media">
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {media.map((item) =>
-                item.type === "video" ? (
-                  <video className="aspect-square w-full rounded-[20px] object-cover" src={item.url} controls playsInline key={item.url} />
-                ) : (
-                  <img className="aspect-square w-full rounded-[20px] object-cover" src={item.url} alt="" key={item.url} />
-                ),
-              )}
-            </div>
           </Card>
         )}
 
@@ -446,6 +412,66 @@ const RecipeDetail = () => {
                 </li>
               ))}
             </ol>
+          </Card>
+        )}
+
+        {!recipe.is_premade && recipe.notes && (
+          <Card title="Notes">
+            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-[#696555]">
+              {recipe.notes}
+            </p>
+          </Card>
+        )}
+
+        {pairedScents.length > 0 && (
+          <Card title="Pairs well with">
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              {pairedScents.map((scent) => (
+                <Link
+                  className="min-w-0"
+                  key={scent.id}
+                  to={`/scents/${scent.id}`}
+                >
+                  <div className="aspect-square overflow-hidden rounded-[20px] bg-[#D6D2C6]">
+                    {scent.image_url && (
+                      <img
+                        className="size-full object-cover"
+                        src={scent.image_url}
+                        alt={scent.name}
+                      />
+                    )}
+                  </div>
+                  <p className="mt-2 truncate text-center text-xs text-[#696555]">
+                    {scent.name}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {media.length > 0 && (
+          <Card title="Media">
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {media.map((item) =>
+                item.type === "video" ? (
+                  <video
+                    className="aspect-square w-full rounded-[20px] object-cover"
+                    src={item.url}
+                    controls
+                    playsInline
+                    key={item.url}
+                  />
+                ) : (
+                  <img
+                    className="aspect-square w-full rounded-[20px] object-cover"
+                    src={item.url}
+                    alt=""
+                    key={item.url}
+                  />
+                ),
+              )}
+            </div>
           </Card>
         )}
 
