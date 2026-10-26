@@ -141,10 +141,10 @@ const Shop = () => {
 
               return (
                 <li key={product.id ?? product.name}>
-                  <article className="grid min-h-38.5 grid-cols-[34%_1fr] overflow-hidden rounded-[28px] bg-[#d8d1c1] shadow-[0_3px_4px_rgba(34,27,4,0.2)] sm:min-h-44">
-                    <div className="grid min-w-0 place-items-center bg-white p-3 sm:p-5">
+                  <article className="grid min-h-48 grid-cols-[42%_1fr] overflow-hidden rounded-[28px] bg-[#d8d1c1] shadow-[0_3px_4px_rgba(34,27,4,0.2)] sm:min-h-56">
+                    <div className="grid min-w-0 place-items-center bg-white p-1.5 sm:p-3">
                       <img
-                        className="max-h-31.5 w-full object-contain sm:max-h-36"
+                        className="size-full max-h-44 object-contain sm:max-h-52"
                         src={product.image}
                         alt={product.name}
                         loading="lazy"
