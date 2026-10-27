@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { LuArrowUpRight, LuSearch, LuSlidersHorizontal } from "react-icons/lu";
+import { LuSearch } from "react-icons/lu";
 
-import scentImage from "../assets/images/shop/scent.png";
+import scentImage from "../assets/images/scent.jpg";
 import { PRODUCTS } from "../lib/shopProducts";
 import supabase from "../lib/supabase";
 
@@ -56,29 +56,32 @@ const Shop = () => {
     };
   }, []);
 
-  const categoryProducts =
-    activeCategory === "Essential oils"
-      ? scents.map((scent) => ({
+  const query = searchQuery.trim().toLowerCase();
+  const matches = (product) => product.name.toLowerCase().includes(query);
+  const showOils =
+    activeCategory === "All" || activeCategory === "Essential oils";
+  const showEquipment =
+    activeCategory === "All" || activeCategory === "Tools & Accessories";
+  const equipmentProducts = showEquipment ? PRODUCTS.filter(matches) : [];
+  const oilProducts = showOils
+    ? scents
+        .map((scent) => ({
           id: scent.id,
           name: scent.name,
           image: scentImage,
           purchaseUrl: scent.purchase_url,
         }))
-      : activeCategory === "All" || activeCategory === "Tools & Accessories"
-        ? PRODUCTS
-        : [];
-  const visibleProducts = categoryProducts.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
-  );
-
-  const hasProducts = categoryProducts.length > 0;
-  const isScentsCategory = activeCategory === "Essential oils";
+        .filter(matches)
+    : [];
+  const hasAny = equipmentProducts.length > 0 || oilProducts.length > 0;
+  const isKnownCategory = showOils || showEquipment;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 pb-8 sm:px-10">
-      <div className="space-y-7">
-        <div className="relative">
-          <label className="flex h-11 items-center gap-3 rounded-full bg-white/75 px-4 text-[#9c9889] shadow-[0_3px_12px_rgba(34,27,4,0.16)] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#766d51]">
+    <main className="mx-auto w-full max-w-5xl px-5 pb-8 pt-14 sm:px-10">
+      <h1 className="font-serif text-[32px] uppercase leading-tight">Shop</h1>
+      <div className="mt-6 space-y-5">
+        <div className="relative flex items-center gap-3">
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-full bg-[#F4F2EE] px-4 text-[#9c9889] shadow-[0_3px_12px_rgba(34,27,4,0.16)] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#766d51]">
             <LuSearch className="size-6 shrink-0" aria-hidden="true" />
             <span className="sr-only">Search shop products</span>
             <input
@@ -88,18 +91,12 @@ const Shop = () => {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
             />
-            <span
-              className="grid size-8 shrink-0 place-items-center"
-              aria-hidden="true"
-            >
-              <LuSlidersHorizontal className="size-5" aria-hidden="true" />
-            </span>
           </label>
         </div>
 
         <div
           aria-label="Shop categories"
-          className="-mx-6 overflow-x-auto px-6 sm:-mx-10 sm:px-10"
+          className="-mx-5 overflow-x-auto px-5 sm:-mx-10 sm:px-10"
           style={{ scrollbarWidth: "none" }}
         >
           <div className="flex w-max gap-2">
@@ -110,7 +107,7 @@ const Shop = () => {
                 <button
                   key={category}
                   className={`min-h-8 rounded-full px-4 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#766d51] ${
-                    isActive ? "bg-[#d2cab5]" : "bg-white/65"
+                    isActive ? "bg-[#d2cab5]" : "bg-[#F4F2EE]"
                   }`}
                   type="button"
                   aria-pressed={isActive}
@@ -123,39 +120,49 @@ const Shop = () => {
           </div>
         </div>
 
-        {isScentsCategory && scentsLoading ? (
-          <p className="rounded-3xl bg-white/45 px-5 py-8 text-center text-sm text-[#716b58]">
-            Loading essential oils...
-          </p>
-        ) : isScentsCategory && scentsError ? (
-          <p
-            className="rounded-3xl bg-white/45 px-5 py-8 text-center text-sm text-red-800"
-            role="alert"
-          >
-            Could not load essential oils: {scentsError}
-          </p>
-        ) : hasProducts && visibleProducts.length > 0 ? (
-          <ul className="space-y-8 sm:space-y-6" aria-label="Shop products">
-            {visibleProducts.map((product) => {
+        {equipmentProducts.length > 0 && activeCategory === "All" && (
+          <h2 className="text-xl font-normal">Tools &amp; Accessories</h2>
+        )}
+        {equipmentProducts.length > 0 && (
+          <ul className="grid grid-cols-2 gap-4" aria-label="Shop products">
+            {equipmentProducts.map((product, index) => {
               const purchaseUrl = getPurchaseUrl(product);
+              const isWide = index % 3 === 0;
+              const buyButtonClass =
+                "flex h-11 w-full items-center justify-center rounded-full bg-[#696555] text-sm text-[#D8D1C1] shadow-[0_3px_4px_rgba(34,27,4,0.3)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]";
 
               return (
-                <li key={product.id ?? product.name}>
-                  <article className="grid min-h-48 grid-cols-[42%_1fr] overflow-hidden rounded-[28px] bg-[#d8d1c1] shadow-[0_3px_4px_rgba(34,27,4,0.2)] sm:min-h-56">
-                    <div className="grid min-w-0 place-items-center bg-white p-1.5 sm:p-3">
+                <li
+                  className={isWide ? "col-span-2" : "col-span-1"}
+                  key={product.id ?? product.name}
+                >
+                  <article
+                    className={`h-full overflow-hidden rounded-[28px] bg-white p-3 ${
+                      isWide
+                        ? "grid grid-cols-[42%_1fr] items-center gap-4"
+                        : "flex flex-col gap-3"
+                    }`}
+                  >
+                    <div
+                      className={`grid place-items-center ${isWide ? "h-40" : "h-28"}`}
+                    >
                       <img
-                        className="size-full max-h-44 object-contain sm:max-h-52"
+                        className="size-full object-contain"
                         src={product.image}
                         alt={product.name}
                         loading="lazy"
                       />
                     </div>
-                    <div className="flex min-w-0 flex-col items-start justify-between gap-2 py-4.5 pl-4.5 pr-9 sm:pl-6 sm:pr-10">
+                    <div
+                      className={`flex min-w-0 flex-col ${
+                        isWide ? "gap-3" : "flex-1 justify-between gap-4 px-1"
+                      }`}
+                    >
                       <div className="min-w-0">
-                        <h2 className="font-serif text-[15px] leading-tight uppercase sm:text-lg">
+                        <h2 className="font-serif text-base uppercase leading-tight">
                           {product.name}
                         </h2>
-                        <p className="mt-2 text-xs text-[#716b58] sm:text-sm">
+                        <p className="mt-1 text-xs text-[#716b58]">
                           {purchaseUrl
                             ? "Buy in online store"
                             : "Store link coming soon"}
@@ -163,23 +170,20 @@ const Shop = () => {
                       </div>
                       {purchaseUrl ? (
                         <a
-                          className="grid size-8 shrink-0 self-end place-items-center rounded-full bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#766d51]"
+                          className={buyButtonClass}
                           href={purchaseUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={`Buy ${product.name} online`}
                         >
-                          <LuArrowUpRight
-                            className="size-5"
-                            aria-hidden="true"
-                          />
+                          Buy Now
                         </a>
                       ) : (
                         <span
-                          className="grid size-8 shrink-0 self-end place-items-center rounded-full bg-white/60 text-[#716b58]"
-                          aria-hidden="true"
+                          className={`${buyButtonClass} opacity-50`}
+                          aria-disabled="true"
                         >
-                          <LuArrowUpRight className="size-5" />
+                          Buy Now
                         </span>
                       )}
                     </div>
@@ -188,9 +192,84 @@ const Shop = () => {
               );
             })}
           </ul>
-        ) : (
+        )}
+
+        {showOils && scentsLoading ? (
           <p className="rounded-3xl bg-white/45 px-5 py-8 text-center text-sm text-[#716b58]">
-            {hasProducts
+            Loading essential oils...
+          </p>
+        ) : showOils && scentsError ? (
+          <p
+            className="rounded-3xl bg-white/45 px-5 py-8 text-center text-sm text-red-800"
+            role="alert"
+          >
+            Could not load essential oils: {scentsError}
+          </p>
+        ) : (
+          oilProducts.length > 0 && (
+            <>
+              {activeCategory === "All" && (
+                <h2 className="pt-4 text-xl font-normal">Essential oils</h2>
+              )}
+              <ul className="space-y-4" aria-label="Essential oils">
+                {oilProducts.map((product) => {
+                  const purchaseUrl = getPurchaseUrl(product);
+                  const buttonClass =
+                    "flex h-10 w-full items-center justify-center rounded-full bg-[#696555] text-xs text-[#D8D1C1] shadow-[0_3px_4px_rgba(34,27,4,0.3)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]";
+
+                  return (
+                    <li key={product.id}>
+                      <article className="flex gap-4 rounded-[28px] bg-white p-3 shadow-[0_4px_14px_rgba(34,27,4,0.08)]">
+                        <div className="size-36 shrink-0 overflow-hidden rounded-[20px] bg-[#ECEAE6]">
+                          <img
+                            className="size-full object-cover"
+                            src={product.image}
+                            alt={product.name}
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="flex min-w-0 flex-1 flex-col justify-between py-1">
+                          <div className="min-w-0">
+                            <h2 className="truncate font-serif text-base uppercase leading-tight">
+                              {product.name}
+                            </h2>
+                            <p className="mt-2 text-base text-[#696555]">
+                              {purchaseUrl
+                                ? "Buy in online store"
+                                : "Store link coming soon"}
+                            </p>
+                          </div>
+                          {purchaseUrl ? (
+                            <a
+                              className={buttonClass}
+                              href={purchaseUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Buy ${product.name} online`}
+                            >
+                              Buy Now
+                            </a>
+                          ) : (
+                            <span
+                              className={`${buttonClass} opacity-50`}
+                              aria-disabled="true"
+                            >
+                              Buy Now
+                            </span>
+                          )}
+                        </div>
+                      </article>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )
+        )}
+
+        {!hasAny && !(showOils && (scentsLoading || scentsError)) && (
+          <p className="rounded-3xl bg-white/45 px-5 py-8 text-center text-sm text-[#716b58]">
+            {isKnownCategory
               ? "No products match your search."
               : `Products in ${activeCategory} are coming soon.`}
           </p>
