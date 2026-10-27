@@ -3,6 +3,7 @@ import AppLayout from "./components/AppLayout";
 import RequireAuth from "./components/RequireAuth";
 import Add from "./pages/Add";
 import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import Premium from "./pages/Premium";
 import Profile from "./pages/Profile";
@@ -10,6 +11,8 @@ import RecipeDetail from "./pages/RecipeDetail";
 import Explore from "./pages/Explore";
 import ExploreAll from "./pages/ExploreAll";
 import ScentDetail from "./pages/ScentDetail";
+import ScentProfile from "./pages/ScentProfile";
+import ScentWrapped from "./pages/ScentWrapped";
 import Shop from "./pages/Shop";
 
 const AppRoutes = () => {
@@ -18,6 +21,7 @@ const AppRoutes = () => {
       <Route path="signup" element={<Navigate to="/signin" replace />} />
       <Route path="signin" element={<Auth />} />
       <Route element={<RequireAuth />}>
+        <Route path="onboarding" element={<Onboarding />} />
         <Route element={<AppLayout />}>
           <Route index element={<Home />} />
           <Route path="scents" element={<Explore />} />
@@ -28,6 +32,8 @@ const AppRoutes = () => {
           <Route path="recipes/:id/edit" element={<Add />} />
           <Route path="shop" element={<Shop />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="profile/wrapped" element={<ScentWrapped />} />
+          <Route path="profile/scent-profile" element={<ScentProfile />} />
           <Route path="premium" element={<Premium />} />
         </Route>
       </Route>
