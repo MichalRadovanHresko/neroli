@@ -235,7 +235,7 @@ const Home = () => {
     <main className="overflow-hidden bg-[#EAE3D6] text-[#221B04]">
       {promoOpen && !isPremium && (
         <div
-          className="fixed inset-0 z-[100] grid place-items-center bg-black/40 px-6"
+          className="fixed inset-0 z-100 grid place-items-center bg-black/40 px-6"
           role="dialog"
           aria-modal="true"
           aria-label="Get Neroli+"
@@ -321,34 +321,29 @@ const Home = () => {
               </button>
             </div>
             <Link
-              className="group relative block text-left text-white"
+              className="block overflow-hidden rounded-[22px] bg-[#F4F2EE] text-left"
               to={`/scents/${favoriteScent.id}`}
               aria-label={`Open favorite scent ${favoriteScent.name}`}
             >
-              <span className="relative block aspect-square w-full overflow-hidden rounded-[22px] bg-[#696555] sm:aspect-[1.55] lg:aspect-[1.8]">
-                <img
-                  src={favoriteScent.image_url}
-                  alt={`${favoriteScent.name} scent`}
-                  className="absolute inset-0 h-full w-full object-cover object-center"
-                />
-                <span className="absolute inset-x-0 bottom-0 flex min-h-25 items-center border-t border-white/50 bg-[#F4F2EE]/45 py-4 pl-5 pr-20 text-left backdrop-blur-2xl sm:min-h-28 sm:pl-7">
-                  <span className="flex min-w-0 flex-col gap-1">
-                    <span className="line-clamp-2 wrap-break-word font-scent text-2xl uppercase leading-tight sm:text-[32px]">
-                      {favoriteScent.name}
-                    </span>
-                    <span className="line-clamp-1 text-[10px] text-white/90 sm:text-xs">
-                      {favoriteScent.short_description ||
-                        favoriteScent.scent_family}
-                    </span>
+              <img
+                src={favoriteScent.image_url}
+                alt={`${favoriteScent.name} scent`}
+                className="aspect-[1.4] w-full bg-[#696555] object-cover object-center sm:aspect-[2]"
+              />
+              <span className="block px-6 pb-5 pt-5">
+                <span className="line-clamp-2 block font-serif text-lg uppercase leading-tight tracking-wide">
+                  {favoriteScent.name}
+                </span>
+                <span className="mt-1.5 line-clamp-1 block text-sm text-[#696555]">
+                  {favoriteScent.short_description ||
+                    favoriteScent.scent_family}
+                </span>
+                <span className="mt-4 flex items-center justify-between">
+                  <span className="text-xs text-[#696555]">Explore note</span>
+                  <span className="grid size-10 place-items-center rounded-full bg-[#EAE3D6]">
+                    <LuArrowUpRight className="size-4" aria-hidden="true" />
                   </span>
                 </span>
-              </span>
-              <span
-                className="absolute -bottom-6.5 right-10.5 z-10 size-14 rounded-full bg-[#EAE3D6]"
-                aria-hidden="true"
-              />
-              <span className="absolute -bottom-5 right-12 z-20 grid size-11 place-items-center rounded-full bg-white text-[#221B04] shadow-sm">
-                <LuArrowUpRight className="size-5" aria-hidden="true" />
               </span>
             </Link>
           </section>
@@ -550,7 +545,7 @@ const Home = () => {
             </div>
           </div>
           <Link
-            className="mt-4 flex h-11 w-full items-center justify-center rounded-[23.603px] bg-[#D6D2C6] text-sm font-medium shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.15)]"
+            className="mt-4 flex h-11 w-full items-center justify-center rounded-[23.603px] bg-[#E5CCA1] text-sm font-medium shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.15)]"
             to="/premium"
           >
             Get NÉROLI+
@@ -573,7 +568,7 @@ const Home = () => {
             </button>
           </div>
           <Link
-            className="group relative block text-left text-white"
+            className="block overflow-hidden rounded-[22px] bg-[#F4F2EE] text-left"
             to={craftedScent ? `/scents/${craftedScent.id}` : "/scents"}
             aria-label={
               craftedScent
@@ -582,41 +577,36 @@ const Home = () => {
             }
             aria-busy={!craftedScent}
           >
-            <span className="relative block aspect-[.76] w-full overflow-hidden rounded-[22px] bg-[#D6D2C6] sm:aspect-[.95] lg:aspect-[1.1]">
-              {craftedScent && (
-                <>
-                  <img
-                    src={craftedScent.image_url}
-                    alt={`${craftedScent.name} scent`}
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover object-center"
-                  />
-                  <span className="absolute inset-x-0 bottom-0 flex min-h-34 items-center border-t border-white/50 bg-[#F4F2EE]/45 py-5 pl-5 pr-20 text-left backdrop-blur-2xl sm:min-h-36 sm:pl-7">
-                    <span className="flex min-w-0 flex-col gap-2">
-                      <span className="line-clamp-2 wrap-break-word font-scent text-2xl uppercase leading-tight sm:text-[32px]">
-                        {craftedScent.name}
-                      </span>
-                      <span className="line-clamp-2 text-xs leading-relaxed">
-                        {craftedScent.short_description ||
-                          craftedScent.scent_family}
-                      </span>
-                    </span>
-                  </span>
-                </>
-              )}
-              {!craftedScent && (
+            <span className="relative block aspect-[1.1] w-full overflow-hidden bg-[#D6D2C6] sm:aspect-[1.6]">
+              {craftedScent ? (
+                <img
+                  src={craftedScent.image_url}
+                  alt={`${craftedScent.name} scent`}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                />
+              ) : (
                 <span className="absolute inset-0 grid place-items-center text-xs text-[#221B04]/70">
                   Loading a scent...
                 </span>
               )}
             </span>
-            <span
-              className="absolute -bottom-6.5 right-10.5 z-10 size-14 rounded-full bg-[#EAE3D6]"
-              aria-hidden="true"
-            />
-            <span className="absolute -bottom-5 right-12 z-20 grid size-11 place-items-center rounded-full bg-white text-[#221B04] shadow-sm">
-              <LuArrowUpRight className="size-5" aria-hidden="true" />
-            </span>
+            {craftedScent && (
+              <span className="flex items-center gap-4 px-6 pb-6 pt-5">
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 block font-serif text-[28px] uppercase leading-tight tracking-wide">
+                    {craftedScent.name}
+                  </span>
+                  <span className="mt-2 line-clamp-2 block text-sm leading-snug">
+                    {craftedScent.short_description ||
+                      craftedScent.scent_family}
+                  </span>
+                </span>
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#EAE3D6]">
+                  <LuArrowUpRight className="size-4" aria-hidden="true" />
+                </span>
+              </span>
+            )}
           </Link>
         </section>
 

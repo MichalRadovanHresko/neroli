@@ -273,7 +273,7 @@ const Notifications = () => {
         Notifications
       </h1>
 
-      <div className="mt-6 flex gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mt-6 flex gap-3 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
         {FILTERS.map((name) => (
           <button
             className={`shrink-0 rounded-full px-5 py-2.5 text-sm ${

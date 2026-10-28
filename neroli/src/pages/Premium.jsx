@@ -33,15 +33,15 @@ const FEATURES = [
 
 const Premium = () => (
   <main className="fixed inset-0 z-50 overflow-y-auto bg-[#1A150B] text-[#E5D9BE]">
-    <div className="relative mx-auto min-h-[1040px] w-full max-w-[402px]">
+    <div className="relative mx-auto min-h-260 w-full max-w-100.5">
       <img
-        className="absolute inset-x-0 top-0 h-[596px] w-full object-cover"
+        className="absolute inset-x-0 top-0 h-149 w-full object-cover"
         src={premiumBackground}
         alt=""
       />
-      <div className="absolute inset-x-0 top-0 h-[596px] bg-[linear-gradient(180deg,rgba(26,21,11,0)_55%,rgba(26,21,11,0.85)_100%),linear-gradient(90deg,rgba(26,21,11,0.92)_0%,rgba(26,21,11,0.8)_55%,rgba(26,21,11,0.1)_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-149 bg-[linear-gradient(180deg,rgba(26,21,11,0)_55%,rgba(26,21,11,0.85)_100%),linear-gradient(90deg,rgba(26,21,11,0.92)_0%,rgba(26,21,11,0.8)_55%,rgba(26,21,11,0.1)_100%)]" />
 
-      <div className="relative px-8 pt-[55px] pb-24">
+      <div className="relative px-8 pt-13.75 pb-24">
         <Link
           className="grid size-10 place-items-center rounded-full bg-[#E5D9BE] text-[#221B04]"
           to="/"
@@ -50,13 +50,11 @@ const Premium = () => (
           <LuChevronLeft className="size-5" aria-hidden="true" />
         </Link>
 
-        <p className="mt-[34px] font-serif text-[32px] leading-[44px]">
-          NÉROLI+
-        </p>
-        <p className="mt-[34px] text-[13px] uppercase leading-5">
+        <p className="mt-8.5 font-serif text-[32px] leading-11">NÉROLI+</p>
+        <p className="mt-8.5 text-[13px] uppercase leading-5">
           The private atelier
         </p>
-        <h1 className="mt-4 font-serif text-[40px] leading-[45px]">
+        <h1 className="mt-4 font-serif text-[40px] leading-11.25">
           A deeper fragrance experience.
         </h1>
         <p className="mt-6 text-base leading-6">
@@ -64,16 +62,16 @@ const Premium = () => (
         </p>
 
         <button
-          className="mt-[26px] flex h-[52px] w-full items-center justify-center rounded-full bg-[#E0D2B4] text-[15px] font-medium text-[#221B04]"
+          className="mt-6.5 flex h-13 w-full items-center justify-center rounded-full bg-[#E0D2B4] text-[15px] font-medium text-[#221B04]"
           type="button"
         >
           Get NÉROLI+
         </button>
 
-        <ul className="mt-[26px]">
+        <ul className="mt-6.5">
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <li
-              className="flex h-[100px] gap-[30px] border-t border-[#E5D9BE]/20 pt-[14px]"
+              className="flex h-25 gap-7.5 border-t border-[#E5D9BE]/20 pt-3.5"
               key={title}
             >
               <Icon
@@ -82,7 +80,7 @@ const Premium = () => (
               />
               <div>
                 <h2 className="text-[17px] leading-6">{title}</h2>
-                <p className="mt-1 text-[15px] leading-[22px] text-[#E5D9BE]/80">
+                <p className="mt-1 text-[15px] leading-5.5 text-[#E5D9BE]/80">
                   {text}
                 </p>
               </div>
