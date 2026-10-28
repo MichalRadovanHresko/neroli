@@ -165,7 +165,7 @@ const FavoriteScents = () => {
             </div>
             {signature.scent.image_url && (
               <img
-                className="absolute inset-y-0 right-0 h-full w-1/2 object-cover [mask-image:linear-gradient(90deg,transparent,#000_45%)]"
+                className="absolute inset-y-0 right-0 h-full w-1/2 object-cover mask-[linear-gradient(90deg,transparent,#000_45%)]"
                 src={signature.scent.image_url}
                 alt=""
               />
@@ -174,7 +174,7 @@ const FavoriteScents = () => {
 
           <section className="mt-7">
             <h2 className="font-serif text-2xl">Your top notes</h2>
-            <ul className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <ul className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 scrollbar-none [&::-webkit-scrollbar]:hidden">
               {stats.rows.map((row) => (
                 <li className="w-23 shrink-0" key={row.scent.id}>
                   <Link to={`/scents/${row.scent.id}`}>

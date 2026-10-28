@@ -309,7 +309,7 @@ const RecipeDetail = () => {
     ingredients.find((ingredient) => ingredient.image_url)?.image_url;
 
   return (
-    <main className="min-h-screen bg-[#EAE3D6] pb-[calc(var(--spacing)*18)] text-[#221B04]">
+    <main className="min-h-screen bg-[#EAE3D6] pb-18 text-[#221B04]">
       <header className="relative flex min-h-95 flex-col justify-end overflow-hidden bg-[#696555] px-5 pb-6 text-white">
         {heroImage && (
           <img
