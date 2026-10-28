@@ -68,6 +68,9 @@ const Add = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [recipeCount, setRecipeCount] = useState(0);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState("");
+  const [generated, setGenerated] = useState(null);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [mediaItems, setMediaItems] = useState([]);
   const [pairIds, setPairIds] = useState([]);
@@ -443,6 +446,50 @@ const Add = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const generateRecipe = async () => {
+    if (generating) return;
+    setGenerating(true);
+    setGenerateError("");
+    setMessage("");
+    const { data, error: invokeError } = await supabase.functions.invoke(
+      "generate-recipe",
+      { body: { scentIds: selectedIds, idea: recipeName.trim() } },
+    );
+    setGenerating(false);
+    const recipe = data?.recipe;
+    if (invokeError || !recipe) {
+      let detail = data?.error || invokeError?.message;
+      if (invokeError?.context?.text) {
+        const raw = await invokeError.context.text().catch(() => "");
+        try {
+          detail = JSON.parse(raw).error || raw || detail;
+        } catch {
+          detail = raw || detail;
+        }
+      }
+      setGenerateError(detail || "Could not generate a recipe.");
+      return;
+    }
+    if (typeof recipe !== "object" || !recipe.scentIds?.length) {
+      setGenerateError(
+        `Unexpected response from generate-recipe: ${JSON.stringify(data).slice(0, 300)}`,
+      );
+      return;
+    }
+    setGenerated(recipe);
+  };
+
+  const applyGenerated = () => {
+    if (!generated) return;
+    if (generated.name) setRecipeName(generated.name);
+    setSubtitle(generated.subtitle ?? "");
+    setNotes(generated.description ?? "");
+    setSelectedIds(generated.scentIds ?? []);
+    setProfile({ ...initialProfile, ...generated.profile });
+    setSteps(generated.steps?.length ? generated.steps : [""]);
+    setGenerated(null);
   };
 
   const confirmLeave = () => {
@@ -1051,6 +1098,70 @@ const Add = () => {
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="mt-10 rounded-[28px] bg-[#F4F2EE] p-5">
+          <h2 className="text-xl font-normal">Generate recipe</h2>
+          <p className="mt-1 text-xs text-[#696555]">
+            {isPremium
+              ? "Pick some ingredients first, or let Néroli choose them for you."
+              : "Let Néroli build a draft for you with NÉROLI+."}
+          </p>
+          {isPremium ? (
+            <button
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-[#696555] text-sm text-[#F4F2EE] shadow-[0_3px_4px_rgba(0,0,0,0.25)] disabled:opacity-60"
+              type="button"
+              onClick={generateRecipe}
+              disabled={generating}
+            >
+              {generating ? "Generating..." : "Generate a recipe"}
+            </button>
+          ) : (
+            <Link
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-[#696555] text-sm text-[#F4F2EE] shadow-[0_3px_4px_rgba(0,0,0,0.25)]"
+              to="/premium"
+            >
+              Unlock with NÉROLI+
+            </Link>
+          )}
+          {generateError && (
+            <p className="mt-3 text-xs text-red-800" role="alert">
+              {generateError}
+            </p>
+          )}
+          {generated && (
+            <div className="mt-4 rounded-2xl bg-white p-4">
+              <p className="text-base">{generated.name}</p>
+              {generated.subtitle && (
+                <p className="text-xs text-[#696555]">{generated.subtitle}</p>
+              )}
+              <p className="mt-2 text-xs text-[#4E4934]">
+                {generated.description}
+              </p>
+              <p className="mt-2 text-xs text-[#696555]">
+                {(generated.scentIds ?? [])
+                  .map((id) => scents.find((scent) => scent.id === id)?.name)
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              <div className="mt-4 flex gap-3">
+                <button
+                  className="h-11 flex-1 rounded-full bg-[#696555] text-sm text-[#F4F2EE]"
+                  type="button"
+                  onClick={applyGenerated}
+                >
+                  Use this recipe
+                </button>
+                <button
+                  className="h-11 flex-1 rounded-full bg-[#EAE3D6] text-sm"
+                  type="button"
+                  onClick={() => setGenerated(null)}
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {error && (
