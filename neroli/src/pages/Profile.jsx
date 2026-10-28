@@ -460,7 +460,7 @@ const Profile = () => {
       </div>
       {editOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-[#221B04]/50"
+          className="fixed inset-0 z-100 flex items-end justify-center bg-[#221B04]/50"
           role="dialog"
           aria-modal="true"
           aria-label="Edit profile"

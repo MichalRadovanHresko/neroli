@@ -1,8 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 
 const RequireAuth = () => {
-  const { session, loading } = useAuth();
+  const { session, loading, needsOnboarding } = useAuth();
+  const { pathname } = useLocation();
 
   if (loading) {
     return (
@@ -10,6 +11,10 @@ const RequireAuth = () => {
         Restoring your session...
       </main>
     );
+  }
+
+  if (session && needsOnboarding && pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return session ? <Outlet /> : <Navigate to="/signin" replace />;
