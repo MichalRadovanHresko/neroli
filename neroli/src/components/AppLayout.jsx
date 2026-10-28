@@ -5,7 +5,10 @@ import Header from "./Header";
 const AppLayout = () => {
   const { pathname } = useLocation();
 
-  const hideHeader = pathname === "/profile";
+  const hideHeader =
+    pathname.startsWith("/profile") ||
+    pathname === "/shop" ||
+    pathname.startsWith("/scents/");
 
   return (
     <div className="min-h-screen pb-28">
