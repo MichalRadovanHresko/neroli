@@ -5,42 +5,24 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { LuArrowLeft, LuPencil, LuTrash2 } from "react-icons/lu";
+import {
+  LuArrowLeft,
+  LuGlobe,
+  LuHeart,
+  LuInfo,
+  LuPlus,
+  LuSquarePen,
+  LuUser,
+} from "react-icons/lu";
 import { useAuth } from "../context/AuthContext.js";
+import { getAvatarToStore, resolveAvatar } from "../lib/avatars";
 import supabase from "../lib/supabase";
 import { useScents } from "../lib/scents";
 import { resolveEquipment } from "../lib/shopProducts";
 
-function SaveIcon({ filled }) {
-  const common = {
-    strokeWidth: 1.5,
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    stroke: "black",
-  };
-  return (
-    <svg
-      className="size-5"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        {...common}
-        fill={filled ? "black" : "none"}
-        d="M13.3334 7.49157V16.9582C13.3334 18.1666 12.4667 18.6749 11.4084 18.0916L8.13342 16.2666C7.78342 16.0749 7.21675 16.0749 6.86675 16.2666L3.59175 18.0916C2.53341 18.6749 1.66675 18.1666 1.66675 16.9582V7.49157C1.66675 6.06657 2.83341 4.8999 4.25841 4.8999H10.7417C12.1667 4.8999 13.3334 6.06657 13.3334 7.49157Z"
-      />
-      <path
-        {...common}
-        fill={filled ? "black" : "none"}
-        d="M18.3334 4.25829V13.725C18.3334 14.9333 17.4667 15.4416 16.4084 14.8583L13.3334 13.1416V7.49163C13.3334 6.06663 12.1667 4.89996 10.7417 4.89996H6.66675V4.25829C6.66675 2.83329 7.83341 1.66663 9.25841 1.66663H15.7417C17.1667 1.66663 18.3334 2.83329 18.3334 4.25829Z"
-      />
-    </svg>
-  );
-}
-
 const PREMIUM_PROFILE_FIELDS = [
+  { id: "sweet", label: "Sweet" },
+  { id: "warm", label: "Warm" },
   { id: "intensity", label: "Intensity" },
   { id: "note", label: "Note" },
   { id: "fresh", label: "Fresh" },
@@ -89,9 +71,12 @@ const ItemGrid = ({ items }) => (
   </div>
 );
 
-const Card = ({ title, children }) => (
-  <section className="rounded-3xl bg-[#D6CFBC] p-5">
-    <h2 className="text-xl font-medium">{title}</h2>
+const Card = ({ title, action, children }) => (
+  <section className="rounded-3xl bg-[#D6CFBC] p-5 shadow-[0_2px_8px_rgba(34,27,4,0.06)]">
+    <div className="flex items-center justify-between gap-3">
+      <h2 className="text-xl font-normal">{title}</h2>
+      {action}
+    </div>
     {children}
   </section>
 );
@@ -103,12 +88,13 @@ const RecipeDetail = () => {
   const navigate = useNavigate();
   const [userComments, setUserComments] = useState([]);
   const [commentText, setCommentText] = useState("");
+  const [commentFormOpen, setCommentFormOpen] = useState(false);
   const [commentPending, setCommentPending] = useState(false);
   const [commentError, setCommentError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const { resolveIngredient, scents } = useScents();
-  const { session } = useAuth();
+  const { session, isPremium: hasPremium } = useAuth();
   const userId = session?.user?.id;
   const [isSaved, setIsSaved] = useState(false);
   const [savePending, setSavePending] = useState(false);
@@ -189,7 +175,7 @@ const RecipeDetail = () => {
     let isCurrent = true;
     supabase
       .from("recipe_comments")
-      .select("id, user_id, author_name, body, created_at")
+      .select("*")
       .eq("recipe_id", id)
       .order("created_at", { ascending: false })
       .then(({ data, error: loadError }) => {
@@ -214,15 +200,26 @@ const RecipeDetail = () => {
       user.user_metadata?.name ||
       user.email?.split("@")[0] ||
       "Anonymous";
-    const { data, error: insertError } = await supabase
-      .from("recipe_comments")
-      .insert({ recipe_id: id, user_id: userId, author_name: authorName, body })
-      .select("id, user_id, author_name, body, created_at")
-      .single();
+    const row = {
+      recipe_id: id,
+      user_id: userId,
+      author_name: authorName,
+      body,
+    };
+    const insertComment = (values) =>
+      supabase.from("recipe_comments").insert(values).select("*").single();
+    let { data, error: insertError } = await insertComment({
+      ...row,
+      author_avatar: getAvatarToStore(user),
+    });
+    if (insertError?.message?.includes("author_avatar")) {
+      ({ data, error: insertError } = await insertComment(row));
+    }
     if (insertError) setCommentError(insertError.message);
     else {
       setUserComments((current) => [data, ...current]);
       setCommentText("");
+      setCommentFormOpen(false);
     }
     setCommentPending(false);
   };
@@ -250,6 +247,29 @@ const RecipeDetail = () => {
             {error}
           </p>
         )}
+      </main>
+    );
+  }
+
+  if (isPremium && !hasPremium) {
+    return (
+      <main className="relative min-h-screen bg-[#EAE3D6] px-6 pt-24 text-[#221B04]">
+        {backButton}
+        <div className="mx-auto mt-10 max-w-sm rounded-3xl bg-[#F4F2EE] p-6 text-center">
+          <span className="inline-block rounded-full bg-[#E2CFA3] px-3 py-1 text-xs font-semibold">
+            NÉROLI+
+          </span>
+          <h1 className="mt-4 font-serif text-2xl">{recipe.name}</h1>
+          <p className="mt-3 text-sm text-[#696555]">
+            This is a premium recipe. Get NÉROLI+ to read it.
+          </p>
+          <Link
+            className="mt-6 flex h-11 items-center justify-center rounded-full bg-[#696555] text-sm text-[#D8D1C1]"
+            to="/premium"
+          >
+            Get NÉROLI+
+          </Link>
+        </div>
       </main>
     );
   }
@@ -290,7 +310,7 @@ const RecipeDetail = () => {
 
   return (
     <main className="min-h-screen bg-[#EAE3D6] pb-36 text-[#221B04]">
-      <header className="relative flex min-h-[380px] flex-col justify-end overflow-hidden bg-[#696555] px-5 pb-6 text-white">
+      <header className="relative flex min-h-95 flex-col justify-end overflow-hidden bg-[#696555] px-5 pb-6 text-white">
         {heroImage && (
           <img
             className="absolute inset-0 size-full object-cover"
@@ -301,16 +321,30 @@ const RecipeDetail = () => {
         )}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(34,27,4,0)_0%,rgba(34,27,4,0.45)_100%)]" />
         {backButton}
-        <button
-          className="absolute right-4 top-5 z-10 grid size-10 place-items-center rounded-full bg-[#F7F5F0] text-black disabled:opacity-60"
-          type="button"
-          onClick={toggleSave}
-          disabled={savePending}
-          aria-pressed={isSaved}
-          aria-label={isSaved ? "Remove from saved" : "Save recipe"}
-        >
-          <SaveIcon filled={isSaved} />
-        </button>
+        {isOwner ? (
+          <Link
+            className="absolute right-4 top-5 z-10 grid size-10 place-items-center rounded-full bg-[#F7F5F0] text-black"
+            to={`/recipes/${recipe.id}/edit`}
+            aria-label="Edit recipe"
+          >
+            <LuSquarePen className="size-5" aria-hidden="true" />
+          </Link>
+        ) : (
+          <button
+            className="absolute right-4 top-5 z-10 grid size-10 place-items-center rounded-full bg-[#F7F5F0] text-black disabled:opacity-60"
+            type="button"
+            onClick={toggleSave}
+            disabled={savePending}
+            aria-pressed={isSaved}
+            aria-label={isSaved ? "Remove from saved" : "Save recipe"}
+          >
+            <LuHeart
+              className={`size-5 ${isSaved ? "text-[#696555]" : ""}`}
+              fill={isSaved ? "currentColor" : "none"}
+              aria-hidden="true"
+            />
+          </button>
+        )}
         <div className="relative">
           <div className="flex flex-wrap gap-2">
             {[
@@ -340,7 +374,78 @@ const RecipeDetail = () => {
       </header>
 
       <div className="mx-auto max-w-3xl space-y-4 px-5 pt-5">
+        {isOwner && (
+          <Card title="Recipe visibility">
+            <div className="flex items-start justify-between gap-3">
+              <p className="mt-1 text-xs text-[#696555]">
+                This is your published
+                <br />
+                visibility status.
+              </p>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#F7F5F0] px-3 py-1.5 text-xs font-semibold">
+                {recipe.is_public ? (
+                  <LuGlobe className="size-4" aria-hidden="true" />
+                ) : (
+                  <LuUser className="size-4" aria-hidden="true" />
+                )}
+                {recipe.is_public ? "Public" : "Private"}
+              </span>
+            </div>
+            <ul className="mt-3 space-y-3">
+              {(recipe.is_public
+                ? [
+                    "Everyone can see this recipe.",
+                    "It can appear in Explore and community feeds.",
+                    "You can change this later in Edit recipe.",
+                  ]
+                : [
+                    "Only you can see this recipe.",
+                    "It will not appear in Explore or community feeds.",
+                    "You can change this later in Edit recipe.",
+                  ]
+              ).map((line) => (
+                <li className="flex items-center gap-3 text-sm" key={line}>
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#696555] text-white">
+                    <LuInfo className="size-3.5" aria-hidden="true" />
+                  </span>
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
         {isPremium && (
+          <section className="rounded-3xl bg-[#F4F2EE] p-5 shadow-[0_2px_8px_rgba(34,27,4,0.06)]">
+            <div className="flex items-center gap-3">
+              <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#221B04] font-serif text-[8px] uppercase text-[#E2CFA3]">
+                Néroli
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold">Neroli suggestion</h2>
+                <p className="text-xs text-[#C9B98A]">Posted by the app</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-[#E2CFA3] px-3 py-1 text-xs font-semibold">
+                Safe to use
+              </span>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-[#696555]">
+              This recipe is an official Neroli suggestion posted by the app. It
+              is intended to be a safe, everyday fragrance option and is
+              presented here as a curated suggestion from the app.
+            </p>
+          </section>
+        )}
+        {!isPremium && !isOwner && !recipe.is_premade && (
+          <section className="rounded-3xl border border-[#D6D2C6] bg-[#F4F2EE] p-5">
+            <h2 className="text-base font-semibold">Community recipe</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#696555]">
+              This recipe was posted by another user and has not been reviewed.
+              Review the ingredients, equipment, and steps carefully before
+              making it, and use it at your own risk.
+            </p>
+          </section>
+        )}
+        {(isPremium || (isOwner && hasPremium)) && (
           <Card title="Scent profile">
             <div className="mt-4 flex flex-wrap gap-2">
               {(recipe.profile_tags ?? []).map((tag) => (
@@ -361,16 +466,16 @@ const RecipeDetail = () => {
                   key={field.id}
                 >
                   <span>{field.label}</span>
-                  <input
-                    className="h-1 w-full accent-[#221B04]"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={profile[field.id]}
-                    disabled
-                    readOnly
-                    aria-label={field.label}
-                  />
+                  <span
+                    className="relative h-px w-full bg-[#221B04]/40"
+                    role="img"
+                    aria-label={`${field.label} ${profile[field.id]}%`}
+                  >
+                    <span
+                      className="absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#221B04]"
+                      style={{ left: `${profile[field.id]}%` }}
+                    />
+                  </span>
                   <span className="text-right">{profile[field.id]}%</span>
                 </div>
               ))}
@@ -456,10 +561,11 @@ const RecipeDetail = () => {
               {media.map((item) =>
                 item.type === "video" ? (
                   <video
-                    className="aspect-square w-full rounded-[20px] object-cover"
+                    className="col-span-2 aspect-video w-full rounded-[20px] bg-black object-contain"
                     src={item.url}
                     controls
                     playsInline
+                    preload="auto"
                     key={item.url}
                   />
                 ) : (
@@ -475,24 +581,44 @@ const RecipeDetail = () => {
           </Card>
         )}
 
-        <Card title="Comments">
-          <form className="mt-4 flex gap-2" onSubmit={submitComment}>
-            <input
-              className="h-11 min-w-0 flex-1 rounded-full bg-[#F4F2EE] px-4 text-sm outline-none placeholder:text-[#9c9889] focus-visible:ring-2 focus-visible:ring-[#696555]"
-              value={commentText}
-              onChange={(event) => setCommentText(event.target.value)}
-              placeholder="Write a comment..."
-              aria-label="Write a comment"
-              maxLength={500}
-            />
-            <button
-              className="h-11 rounded-full bg-[#221B04] px-5 text-sm text-white disabled:opacity-50"
-              type="submit"
-              disabled={commentPending || !commentText.trim()}
-            >
-              Post
-            </button>
-          </form>
+        <Card
+          title="Comments"
+          action={
+            !isOwner && (
+              <button
+                className="grid size-10 place-items-center rounded-full bg-white"
+                type="button"
+                onClick={() => setCommentFormOpen((open) => !open)}
+                aria-expanded={commentFormOpen}
+                aria-label="Add a comment"
+              >
+                <LuPlus
+                  className={`size-5 transition-transform ${commentFormOpen ? "rotate-45" : ""}`}
+                  aria-hidden="true"
+                />
+              </button>
+            )
+          }
+        >
+          {commentFormOpen && !isOwner && (
+            <form className="mt-4 flex gap-2" onSubmit={submitComment}>
+              <input
+                className="h-11 min-w-0 flex-1 rounded-full bg-[#F4F2EE] px-4 text-sm outline-none placeholder:text-[#9c9889] focus-visible:ring-2 focus-visible:ring-[#696555]"
+                value={commentText}
+                onChange={(event) => setCommentText(event.target.value)}
+                placeholder="Write a comment..."
+                aria-label="Write a comment"
+                maxLength={500}
+              />
+              <button
+                className="h-11 rounded-full bg-[#221B04] px-5 text-sm text-white disabled:opacity-50"
+                type="submit"
+                disabled={commentPending || !commentText.trim()}
+              >
+                Post
+              </button>
+            </form>
+          )}
           {commentError && (
             <p className="mt-3 text-sm text-red-800" role="alert">
               {commentError}
@@ -509,11 +635,21 @@ const RecipeDetail = () => {
                   className="rounded-2xl bg-[#F4F2EE] p-4"
                   key={comment.id ?? `${comment.author_name}-${index}`}
                 >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold">
+                  <div className="flex items-center gap-3">
+                    <img
+                      className="size-10 shrink-0 rounded-full bg-[#D6D2C6] object-cover"
+                      src={resolveAvatar(
+                        comment.user_id && comment.user_id === userId
+                          ? getAvatarToStore(session.user)
+                          : comment.author_avatar,
+                        comment.user_id ?? comment.author_name,
+                      )}
+                      alt=""
+                    />
+                    <p className="min-w-0 flex-1 truncate text-sm font-semibold">
                       {comment.author_name}
                     </p>
-                    <p className="text-xs text-[#696555]">
+                    <p className="shrink-0 text-xs text-[#696555]">
                       {formatCommentDate(comment.created_at)}
                     </p>
                   </div>
@@ -536,27 +672,25 @@ const RecipeDetail = () => {
         </Card>
 
         {isOwner && (
-          <div className="mt-8 space-y-3">
+          <div className="mt-10 space-y-3 px-3">
             <Link
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#221B04] text-sm text-white"
+              className="flex h-12 w-full items-center justify-center rounded-[23.603px] bg-[#D6CFBC] text-sm font-medium shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.1)]"
               to={`/recipes/${recipe.id}/edit`}
             >
-              <LuPencil className="size-4" aria-hidden="true" />
               Edit recipe
             </Link>
             {deleteError && (
-              <p className="mb-3 text-sm text-red-800" role="alert">
+              <p className="text-sm text-red-800" role="alert">
                 {deleteError}
               </p>
             )}
             <button
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#F7F5F0] text-sm text-red-800 disabled:opacity-60"
+              className="flex h-12 w-full items-center justify-center rounded-[23.603px] bg-[#221B04] text-sm font-medium text-white shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.25)] disabled:opacity-60"
               type="button"
               onClick={deleteRecipe}
               disabled={deleting}
             >
-              <LuTrash2 className="size-4" aria-hidden="true" />
-              {deleting ? "Deleting..." : "Delete recipe"}
+              {deleting ? "Deleting..." : "Delete"}
             </button>
           </div>
         )}
