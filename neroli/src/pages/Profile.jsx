@@ -298,22 +298,22 @@ const Profile = () => {
               <img className="size-5" src={settingsIcon} alt="" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-12 min-w-40 rounded-2xl bg-[#F7F5F0] p-2 text-[#221B04] shadow-[0_6px_18px_rgba(34,27,4,0.15)]">
+              <div className="absolute right-0 top-12 min-w-40 rounded-2xl bg-[#F7F5F0] p-2 text-base text-[#221B04] shadow-[0_6px_18px_rgba(34,27,4,0.15)]">
                 <button
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm"
+                  className="w-full rounded-xl px-3 py-2 text-left"
                   type="button"
                   onClick={openEdit}
                 >
                   Edit profile
                 </button>
                 <Link
-                  className="block w-full rounded-xl px-3 py-2 text-left text-sm"
+                  className="block w-full rounded-xl px-3 py-2 text-left"
                   to="/onboarding?edit=1"
                 >
-                  Scent preferences
+                  Preferences
                 </Link>
                 <button
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm disabled:opacity-60"
+                  className="w-full rounded-xl px-3 py-2 text-left disabled:opacity-60"
                   type="button"
                   onClick={handleSignOut}
                   disabled={signingOut}
