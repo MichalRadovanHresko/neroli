@@ -136,3 +136,36 @@ input {
   white-space: nowrap;
   clip-path: inset(50%);
 }
+
+.profile-slider {
+  appearance: none;
+  height: 16px;
+  background: transparent;
+}
+
+.profile-slider::-webkit-slider-runnable-track {
+  height: 1px;
+  background: rgba(34, 27, 4, 0.4);
+}
+
+.profile-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  margin-top: -3.5px;
+  border-radius: 9999px;
+  background: #221b04;
+}
+
+.profile-slider::-moz-range-track {
+  height: 1px;
+  background: rgba(34, 27, 4, 0.4);
+}
+
+.profile-slider::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 9999px;
+  background: #221b04;
+}

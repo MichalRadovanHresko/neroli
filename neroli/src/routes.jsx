@@ -5,6 +5,8 @@ import Add from "./pages/Add";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
+import NotFound from "./pages/NotFound";
+import Notifications from "./pages/Notifications";
 import Premium from "./pages/Premium";
 import Profile from "./pages/Profile";
 import RecipeDetail from "./pages/RecipeDetail";
@@ -34,7 +36,9 @@ const AppRoutes = () => {
           <Route path="profile" element={<Profile />} />
           <Route path="profile/wrapped" element={<ScentWrapped />} />
           <Route path="profile/scent-profile" element={<ScentProfile />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="premium" element={<Premium />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
     </Routes>

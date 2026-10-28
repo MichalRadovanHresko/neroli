@@ -89,6 +89,11 @@ const Profile = () => {
   const userId = user?.id;
   const { resolveIngredient } = useScents();
   const [tab, setTab] = useState("saved");
+  const tabsRef = useRef(null);
+  const openTab = (id) => {
+    setTab(id);
+    tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [saved, setSaved] = useState([]);
   const [ownRecipes, setOwnRecipes] = useState([]);
   const [comments, setComments] = useState([]);
@@ -280,6 +285,7 @@ const Profile = () => {
             alt=""
           />
           <div className="absolute inset-0 bg-[#D8D1C1]/45" />
+          <div className="absolute inset-x-0 top-0 h-72 bg-[linear-gradient(180deg,rgba(234,227,214,1)_0%,rgba(234,227,214,0.6)_50%,rgba(234,227,214,0)_100%)]" />
 
           <div className="absolute right-6 top-14.5 z-10">
             <button
@@ -330,13 +336,21 @@ const Profile = () => {
           </div>
 
           <div className="absolute inset-x-5 bottom-6 grid grid-cols-3 gap-4 rounded-[28px] bg-[#F7F5F0]/95 px-6 py-4 text-[#221B04] shadow-[0_2px_10px_rgba(34,27,4,0.1)]">
-            <Stat value={saved.length} label="Saved" />
+            <Stat
+              value={saved.length}
+              label="Saved"
+              onClick={() => openTab("saved")}
+            />
             <Stat
               value={comments.length}
               label="Comments"
-              onClick={() => setTab("comments")}
+              onClick={() => openTab("comments")}
             />
-            <Stat value={ownRecipes.length} label="Recipes" />
+            <Stat
+              value={ownRecipes.length}
+              label="Recipes"
+              onClick={() => openTab("activity")}
+            />
           </div>
         </header>
 
@@ -367,7 +381,8 @@ const Profile = () => {
           </div>
 
           <div
-            className="mt-8 grid grid-cols-3 gap-2"
+            ref={tabsRef}
+            className="mt-8 grid scroll-mt-4 grid-cols-3 gap-2"
             role="tablist"
             aria-label="Profile sections"
           >
