@@ -12,13 +12,13 @@ const Header = () => (
       NÉROLI
     </Link>
     <div className="flex items-center gap-1">
-      <button
+      <Link
         className="grid size-11 place-items-center rounded-full"
-        type="button"
+        to="/notifications"
         aria-label="Notifications"
       >
         <LuBell className="size-5" aria-hidden="true" />
-      </button>
+      </Link>
       <Link
         className="grid size-11 place-items-center rounded-full"
         to="/profile"
