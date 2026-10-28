@@ -77,7 +77,7 @@ const Splash = ({ title, text, onStart, disabled, error }) => (
       </h1>
       <p className="mt-9 text-[15px] leading-snug">{text}</p>
       <button
-        className={`mt-16 h-[52px] w-[197px] rounded-full bg-[#696555] text-sm text-[#E8E2D6] disabled:opacity-60 ${buttonShadow}`}
+        className={`mt-16 h-13 w-49.25 rounded-full bg-[#696555] text-sm text-[#E8E2D6] disabled:opacity-60 ${buttonShadow}`}
         type="button"
         onClick={onStart}
         disabled={disabled}
@@ -191,11 +191,11 @@ const Onboarding = () => {
 
   return (
     <main className="min-h-screen bg-[#EAE3D6] text-[#221B04]">
-      <section className="mx-auto flex min-h-screen w-full max-w-md flex-col px-8 pb-12 pt-[72px]">
+      <section className="mx-auto flex min-h-screen w-full max-w-md flex-col px-8 pb-12 pt-18">
         <div className="flex gap-1.5" aria-hidden="true">
           {STEPS.map((item, position) => (
             <span
-              className={`h-[3px] flex-1 rounded-full ${
+              className={`h-0.75 flex-1 rounded-full ${
                 position <= index ? "bg-[#D6D2C6]" : "bg-[#F4F2EE]"
               }`}
               key={item.key}
@@ -203,7 +203,7 @@ const Onboarding = () => {
           ))}
         </div>
 
-        <h1 className="mx-auto mt-[72px] max-w-[300px] text-center text-2xl leading-[1.2]">
+        <h1 className="mx-auto mt-18 max-w-75 text-center text-2xl leading-[1.2]">
           {step.title}
         </h1>
 
@@ -242,7 +242,7 @@ const Onboarding = () => {
         <div className="mt-auto flex gap-4 pt-10">
           {(index > 0 || editing) && (
             <button
-              className={`h-[50px] flex-1 rounded-full border border-[#D6D2C6] bg-[#EAE3D6] text-sm ${buttonShadow}`}
+              className={`h-12.5 flex-1 rounded-full border border-[#D6D2C6] bg-[#EAE3D6] text-sm ${buttonShadow}`}
               type="button"
               onClick={() =>
                 index > 0 ? setIndex(index - 1) : navigate("/profile")
@@ -253,7 +253,7 @@ const Onboarding = () => {
             </button>
           )}
           <button
-            className={`h-[50px] flex-1 rounded-full bg-[#696555] text-sm text-[#E8E2D6] disabled:opacity-60 ${buttonShadow}`}
+            className={`h-12.5 flex-1 rounded-full bg-[#696555] text-sm text-[#E8E2D6] disabled:opacity-60 ${buttonShadow}`}
             type="button"
             onClick={next}
             disabled={saving}

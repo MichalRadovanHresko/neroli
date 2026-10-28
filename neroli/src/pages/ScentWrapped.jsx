@@ -46,7 +46,7 @@ const ScentWrapped = () => {
               You have a thing for {style.line}.
             </h1>
 
-            <div className="mt-5 h-44 overflow-hidden rounded-[32px] bg-[#D6D2C6]">
+            <div className="mt-5 h-44 overflow-hidden rounded-4xl bg-[#D6D2C6]">
               {heroScent?.image_url && (
                 <img
                   className="size-full object-cover"
