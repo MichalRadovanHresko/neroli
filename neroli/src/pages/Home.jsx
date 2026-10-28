@@ -4,21 +4,34 @@ import {
   LuArrowUpRight,
   LuBookOpen,
   LuCheck,
+  LuFlower,
   LuLink2,
   LuShieldCheck,
+  LuX,
 } from "react-icons/lu";
 import heroImage from "../assets/images/background-image.jpg";
 import { useAuth } from "../context/AuthContext.js";
+import amberImage from "../assets/images/notes/amber.jpg";
+import citrusImage from "../assets/images/notes/citrus.jpg";
+import floralImage from "../assets/images/notes/floral.jpg";
+import fruityImage from "../assets/images/notes/fruity.jpg";
+import spicyImage from "../assets/images/notes/spicy.jpg";
+import tropicalImage from "../assets/images/notes/tropical.jpg";
 import supabase from "../lib/supabase";
 import { useScents } from "../lib/scents";
 
 const noteFamilies = [
-  { name: "Fruity", familyKey: "fruity" },
-  { name: "Citrus", familyKey: "citrus" },
-  { name: "Spicy", familyKey: "spicy" },
-  { name: "Tropical", familyKey: "tropical" },
-  { name: "Amber", familyKey: "gourmand" },
-  { name: "Floral", familyKey: "floral" },
+  { name: "Fruity", image: fruityImage, familyKey: "fruity" },
+  { name: "Citrus", image: citrusImage, familyKey: "citrus" },
+  { name: "Spicy", image: spicyImage, familyKey: "spicy" },
+  { name: "Tropical", image: tropicalImage, familyKey: "tropical" },
+  {
+    name: "Amber",
+    search: "Gourmand",
+    image: amberImage,
+    familyKey: "gourmand",
+  },
+  { name: "Floral", image: floralImage, familyKey: "floral" },
 ];
 
 const guideSteps = [
@@ -84,16 +97,20 @@ const formatEdited = (value) => {
 const Home = () => {
   const navigate = useNavigate();
   const { resolveIngredient } = useScents();
-  const { session } = useAuth();
+  const { session, isPremium } = useAuth();
+  const [promoOpen, setPromoOpen] = useState(
+    () => !sessionStorage.getItem("neroli-plus-promo"),
+  );
+  const closePromo = () => {
+    sessionStorage.setItem("neroli-plus-promo", "1");
+    setPromoOpen(false);
+  };
   const userId = session?.user?.id;
-  const [selectedFamily, setSelectedFamily] = useState("");
   const [favoriteScent, setFavoriteScent] = useState(null);
   const [favoritesLoading, setFavoritesLoading] = useState(true);
   const [recipeScents, setRecipeScents] = useState([]);
   const [ingredientScents, setIngredientScents] = useState([]);
-  const [familyScents, setFamilyScents] = useState({});
   const [craftedScent, setCraftedScent] = useState(null);
-  const [premadeRecipes, setPremadeRecipes] = useState([]);
   const [myRecipes, setMyRecipes] = useState([]);
 
   const latestRecipe = myRecipes[0] ?? null;
@@ -149,16 +166,6 @@ const Home = () => {
             )
             .filter(Boolean),
         );
-        setFamilyScents(
-          Object.fromEntries(
-            noteFamilies.map((family) => [
-              family.name,
-              shuffledScents.find((scent) =>
-                scent.scent_family?.toLowerCase().includes(family.familyKey),
-              ) ?? shuffledScents[0],
-            ]),
-          ),
-        );
       });
 
     return () => {
@@ -185,24 +192,6 @@ const Home = () => {
       isCurrent = false;
     };
   }, [userId]);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    supabase
-      .from("recipes")
-      .select("id, name, image_url, ingredients")
-      .eq("is_premade", true)
-      .order("created_at", { ascending: false })
-      .limit(3)
-      .then(({ data, error }) => {
-        if (isCurrent && !error) setPremadeRecipes(data ?? []);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -244,6 +233,47 @@ const Home = () => {
 
   return (
     <main className="overflow-hidden bg-[#EAE3D6] text-[#221B04]">
+      {promoOpen && !isPremium && (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/40 px-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Get Neroli+"
+        >
+          <div className="relative w-full max-w-sm rounded-[28px] bg-[#F7F5F0] p-6 text-center">
+            <button
+              className="absolute right-4 top-4 grid size-8 place-items-center rounded-full bg-[#EAE3D6]"
+              type="button"
+              onClick={closePromo}
+              aria-label="Close"
+            >
+              <LuX className="size-4" aria-hidden="true" />
+            </button>
+            <span className="mx-auto grid size-14 place-items-center rounded-full bg-[#E2CFA3]">
+              <LuFlower className="size-7" aria-hidden="true" />
+            </span>
+            <h2 className="mt-4 font-serif text-2xl">Get NÉROLI+</h2>
+            <p className="mt-2 text-sm text-[#696555]">
+              Unlock premium recipes, Scent Wrapped, your Scent Profile and more
+              tools for creating your own perfumes.
+            </p>
+            <Link
+              className="mt-5 block rounded-full bg-[#696555] py-3 text-sm text-white"
+              to="/premium"
+              onClick={closePromo}
+            >
+              Discover NÉROLI+
+            </Link>
+            <button
+              className="mt-3 text-xs text-[#696555] underline underline-offset-2"
+              type="button"
+              onClick={closePromo}
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
       <section className="relative min-h-125 overflow-hidden bg-[#D6D2C6] px-6 sm:min-h-165 sm:px-10 lg:min-h-175 lg:px-[max(4rem,calc((100vw-1180px)/2))]">
         <img
           className="absolute inset-0 h-full w-full object-cover object-[52%_center]"
@@ -355,62 +385,6 @@ const Home = () => {
             </div>
           </section>
         )}
-        {premadeRecipes.length > 0 && (
-          <section className="mb-17 sm:mb-19">
-            <div className="mb-5 flex items-end justify-between gap-4">
-              <h2 className="font-sans text-xl font-normal leading-tight sm:text-2xl">
-                Neroli’s selection
-              </h2>
-              <Link
-                className="inline-flex shrink-0 items-center gap-1 border-b border-[#221B04]/55 pb-1 text-[11px]"
-                to="/scents"
-              >
-                See all <LuArrowUpRight className="size-3" aria-hidden="true" />
-              </Link>
-            </div>
-            <ul className="space-y-3">
-              {premadeRecipes.map((recipe) => {
-                const ingredients = (recipe.ingredients ?? []).map(
-                  resolveIngredient,
-                );
-                const image =
-                  recipe.image_url ||
-                  ingredients.find((ingredient) => ingredient.image_url)
-                    ?.image_url;
-                return (
-                  <li key={recipe.id}>
-                    <Link
-                      className="flex items-center gap-4 rounded-2xl bg-[#F4F2EE] p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
-                      to={`/recipes/${recipe.id}`}
-                    >
-                      <span className="block size-20 shrink-0 overflow-hidden rounded-xl bg-[#D6D2C6]">
-                        {image && (
-                          <img
-                            className="size-full object-cover"
-                            src={image}
-                            alt=""
-                            loading="lazy"
-                          />
-                        )}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold">
-                          {recipe.name}
-                        </span>
-                        <span className="mt-1 block truncate text-xs text-[#696555]">
-                          {ingredients
-                            .map((ingredient) => ingredient.name)
-                            .join(", ")}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
-
         <section className="mb-17 sm:mb-19">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
@@ -418,63 +392,30 @@ const Home = () => {
                 Explore by note
               </h2>
             </div>
-            {selectedFamily ? (
-              <button
-                className="border-b border-[#221B04]/55 pb-1 text-[11px]"
-                type="button"
-                onClick={() => setSelectedFamily("")}
-              >
-                Clear filter
-              </button>
-            ) : (
-              <Link
-                className="inline-flex shrink-0 items-center gap-1 border-b border-[#221B04]/55 pb-1 text-[11px]"
-                to="/scents"
-              >
-                See all <LuArrowUpRight className="size-3" aria-hidden="true" />
-              </Link>
-            )}
+            <Link
+              className="inline-flex shrink-0 items-center gap-1 border-b border-[#221B04]/55 pb-1 text-[11px]"
+              to="/scents"
+            >
+              See all <LuArrowUpRight className="size-3" aria-hidden="true" />
+            </Link>
           </div>
           <div className="grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-6 sm:gap-x-5 sm:gap-y-6">
             {noteFamilies.map((family) => (
-              <button
-                className={`flex min-w-0 flex-col items-center gap-2 text-xs sm:text-[13px] ${selectedFamily === family.name ? "rounded-[17px] outline-2 outline-offset-2 outline-[#777452]" : ""}`}
+              <Link
+                className="flex min-w-0 flex-col items-center gap-2 text-xs sm:text-[13px]"
                 key={family.name}
-                type="button"
-                onClick={() =>
-                  setSelectedFamily((current) =>
-                    current === family.name ? "" : family.name,
-                  )
-                }
-                aria-pressed={selectedFamily === family.name}
+                to={`/scents?q=${encodeURIComponent(family.search ?? family.name)}`}
               >
-                {familyScents[family.name] && (
-                  <img
-                    className="aspect-square w-full rounded-[17px] object-cover sm:rounded-[20px]"
-                    src={familyScents[family.name].image_url}
-                    alt=""
-                    loading="lazy"
-                  />
-                )}
+                <img
+                  className="aspect-square w-full rounded-[17px] object-cover sm:rounded-[20px]"
+                  src={family.image}
+                  alt=""
+                  loading="lazy"
+                />
                 <span>{family.name}</span>
-              </button>
+              </Link>
             ))}
           </div>
-          {selectedFamily && (
-            <p className="mt-5 text-xs text-[#221B04]/70">
-              A lovely place to start:{" "}
-              <strong className="font-medium text-[#221B04]">
-                {selectedFamily}
-              </strong>{" "}
-              notes.{" "}
-              <Link
-                className="underline underline-offset-2"
-                to={`/scents?q=${encodeURIComponent(selectedFamily)}`}
-              >
-                Browse recipes
-              </Link>
-            </p>
-          )}
         </section>
 
         <section className="mb-18 sm:mb-19.5">
