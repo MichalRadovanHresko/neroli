@@ -8,6 +8,7 @@ const AppLayout = () => {
   const hideHeader =
     pathname.startsWith("/profile") ||
     pathname === "/shop" ||
+    pathname === "/favorites" ||
     pathname.startsWith("/scents/");
 
   return (

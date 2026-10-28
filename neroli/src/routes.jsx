@@ -4,6 +4,7 @@ import RequireAuth from "./components/RequireAuth";
 import Add from "./pages/Add";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
+import FavoriteScents from "./pages/FavoriteScents";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
@@ -37,6 +38,7 @@ const AppRoutes = () => {
           <Route path="profile/wrapped" element={<ScentWrapped />} />
           <Route path="profile/scent-profile" element={<ScentProfile />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="favorites" element={<FavoriteScents />} />
           <Route path="premium" element={<Premium />} />
           <Route path="*" element={<NotFound />} />
         </Route>

@@ -315,7 +315,7 @@ const Home = () => {
               <button
                 className="inline-flex shrink-0 items-center gap-1 border-b border-[#221B04]/55 pb-1 text-[11px]"
                 type="button"
-                onClick={() => navigate("/scents")}
+                onClick={() => navigate("/favorites")}
               >
                 See all <LuArrowUpRight className="size-3" aria-hidden="true" />
               </button>
