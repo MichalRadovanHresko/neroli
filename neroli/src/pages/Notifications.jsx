@@ -253,25 +253,18 @@ const Notifications = () => {
     .filter((group) => group.rows.length > 0);
 
   return (
-    <main className="min-h-screen bg-[#EAE3D6] px-6 pb-8 pt-4 text-[#221B04]">
-      <div className="flex items-center justify-between">
+    <main className="min-h-screen bg-[#EAE3D6] px-6 pb-8 pt-10 text-[#221B04]">
+      <div className="relative flex items-center justify-center">
         <button
-          className="grid size-10 place-items-center"
+          className="absolute left-0 grid size-10 place-items-center rounded-full bg-white"
           type="button"
           onClick={() => navigate(-1)}
           aria-label="Go back"
         >
           <LuArrowLeft className="size-6" aria-hidden="true" />
         </button>
-        <Link className="font-serif text-2xl" to="/">
-          NÉROLI
-        </Link>
-        <span className="size-10" aria-hidden="true" />
+        <h1 className="font-serif text-[30px] leading-tight">Notifications</h1>
       </div>
-
-      <h1 className="mt-6 font-serif text-[40px] leading-tight">
-        Notifications
-      </h1>
 
       <div className="mt-6 flex gap-3 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
         {FILTERS.map((name) => (

@@ -9,6 +9,7 @@ const AppLayout = () => {
     pathname.startsWith("/profile") ||
     pathname === "/shop" ||
     pathname === "/favorites" ||
+    pathname === "/notifications" ||
     pathname.startsWith("/scents/");
 
   return (
