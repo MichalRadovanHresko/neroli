@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import defaultCoverImage from "../assets/images/perfume.jpg";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   LuArrowLeft,
+  LuHeart,
+  LuLock,
   LuMinus,
   LuPlus,
   LuSearch,
@@ -10,6 +13,15 @@ import {
 import { useAuth } from "../context/AuthContext.js";
 import supabase from "../lib/supabase";
 import { PRODUCTS } from "../lib/shopProducts";
+
+const shuffle = (items) => {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [result[index], result[other]] = [result[other], result[index]];
+  }
+  return result;
+};
 
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
 const MAX_MEDIA_FILES = 6;
@@ -21,6 +33,8 @@ const profileFields = [
   { id: "intensity", label: "Intensity" },
 ];
 
+const DEFAULT_COVER = `${import.meta.env.BASE_URL}perfume.jpg`;
+
 const initialProfile = {
   sweet: 70,
   warm: 70,
@@ -31,7 +45,7 @@ const initialProfile = {
 const getUpdatedAt = () => new Date().toISOString();
 
 const Add = () => {
-  const { session } = useAuth();
+  const { session, isPremium } = useAuth();
   const navigate = useNavigate();
   const { id: editId } = useParams();
   const userId = session?.user?.id;
@@ -54,10 +68,15 @@ const Add = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [recipeCount, setRecipeCount] = useState(0);
-  const [pairIds, setPairIds] = useState([]);
-  const [pairPickerOpen, setPairPickerOpen] = useState(false);
-  const [pairSearch, setPairSearch] = useState("");
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [mediaItems, setMediaItems] = useState([]);
+  const [pairIds, setPairIds] = useState([]);
+  const [isPublic, setIsPublic] = useState(false);
+  const [coverUrl, setCoverUrl] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
+  const coverInput = useRef(null);
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [pairPool, setPairPool] = useState([]);
   const fileInputRef = useRef(null);
   const mediaItemsRef = useRef(mediaItems);
 
@@ -130,6 +149,7 @@ const Add = () => {
       }
 
       setScents(data ?? []);
+      setPairPool(shuffle(data ?? []));
       setLoadingScents(false);
     };
 
@@ -138,6 +158,23 @@ const Add = () => {
       isCurrent = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    let isCurrent = true;
+    supabase
+      .from("scent_favorites")
+      .select("scent_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .then(({ data, error: favError }) => {
+        if (isCurrent && !favError)
+          setFavoriteIds((data ?? []).map((row) => row.scent_id));
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -187,6 +224,8 @@ const Add = () => {
           .filter((value) => value != null),
       );
       setPairIds(data.pairs_with ?? []);
+      setIsPublic(data.is_public === true);
+      setCoverUrl(data.image_url ?? null);
       setEquipment((data.equipment ?? []).map((item) => item.name));
       const savedSteps = (data.steps ?? []).map((step) => step.text);
       setSteps(savedSteps.length > 0 ? savedSteps : [""]);
@@ -204,21 +243,28 @@ const Add = () => {
     .map((id) => scents.find((scent) => scent.id === id))
     .filter(Boolean);
 
-  const availableScents = scents.filter(
-    (scent) =>
-      !selectedIds.includes(scent.id) &&
-      scent.name.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  const pairSuggestions = pairPool
+    .filter((scent) => !selectedIds.includes(scent.id))
+    .slice(0, 3);
 
-  const pairedScents = pairIds
-    .map((id) => scents.find((scent) => scent.id === id))
-    .filter(Boolean);
+  const shownPairs = (
+    pairIds.length > 0
+      ? pairIds.map((id) => scents.find((scent) => scent.id === id))
+      : pairSuggestions
+  )
+    .filter(Boolean)
+    .slice(0, 3);
 
-  const availablePairs = scents.filter(
-    (scent) =>
-      !pairIds.includes(scent.id) &&
-      scent.name.toLowerCase().includes(pairSearch.trim().toLowerCase()),
-  );
+  const availableScents = scents
+    .filter(
+      (scent) =>
+        !selectedIds.includes(scent.id) &&
+        scent.name.toLowerCase().includes(search.trim().toLowerCase()),
+    )
+    .sort(
+      (a, b) =>
+        Number(favoriteIds.includes(b.id)) - Number(favoriteIds.includes(a.id)),
+    );
 
   const addEquipment = (name) => {
     const clean = name.trim();
@@ -229,6 +275,44 @@ const Add = () => {
         : [...current, clean],
     );
   };
+
+  const coverPreview = useMemo(
+    () => (coverFile ? URL.createObjectURL(coverFile) : null),
+    [coverFile],
+  );
+  useEffect(
+    () => () => {
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+    },
+    [coverPreview],
+  );
+  const shownCover = coverPreview || coverUrl || defaultCoverImage;
+
+  const pickCover = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Cover must be a photo.");
+      return;
+    }
+    if (file.size > MAX_MEDIA_BYTES) {
+      setError("Cover photo is larger than 50 MB.");
+      return;
+    }
+    setError("");
+    setCoverFile(file);
+  };
+
+  const hasEquipment = (name) =>
+    equipment.some((item) => item.toLowerCase() === name.toLowerCase());
+
+  const toggleEquipment = (name) =>
+    setEquipment((current) =>
+      current.some((item) => item.toLowerCase() === name.toLowerCase())
+        ? current.filter((item) => item.toLowerCase() !== name.toLowerCase())
+        : [...current, name],
+    );
 
   const saveRecipe = async (event) => {
     event.preventDefault();
@@ -247,13 +331,29 @@ const Add = () => {
     setSaving(true);
 
     try {
+      let imageUrl = coverUrl || DEFAULT_COVER;
+      if (coverFile) {
+        const safeName = coverFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${userId}/covers/${crypto.randomUUID()}-${safeName}`;
+        const coverUpload = await supabase.storage
+          .from("recipe-media")
+          .upload(path, coverFile, { contentType: coverFile.type });
+        if (coverUpload.error) throw coverUpload.error;
+        imageUrl = supabase.storage.from("recipe-media").getPublicUrl(path)
+          .data.publicUrl;
+      }
+
       const recipeData = {
+        image_url: imageUrl,
         user_id: userId,
         name: recipeName.trim() || "Recipe draft",
         short_description: subtitle.trim() || null,
         profile,
         notes: notes.trim(),
-        pairs_with: pairIds,
+        is_public: isPublic,
+        ...(isPremium
+          ? { pairs_with: shownPairs.map((scent) => scent.id) }
+          : {}),
         equipment: equipment.map((name) => ({ name })),
         steps: cleanSteps.map((text, index) => ({
           position: index + 1,
@@ -329,8 +429,6 @@ const Add = () => {
           .from("recipes")
           .update({
             media: allMedia,
-            image_url:
-              allMedia.find((entry) => entry.type === "image")?.url ?? null,
           })
           .eq("id", recipeId)
           .eq("user_id", userId);
@@ -348,12 +446,12 @@ const Add = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#D8D1C1] px-6 pb-32 pt-5 text-[#221B04] sm:px-10">
+    <main className="min-h-screen bg-[#EAE3D6] px-6 pb-32 pt-5 text-[#221B04] sm:px-10">
       <form className="mx-auto max-w-3xl" onSubmit={saveRecipe}>
         <div className="flex items-center justify-between">
           {editId ? (
             <button
-              className="grid size-10 place-items-center"
+              className="grid size-10 place-items-center rounded-full bg-white"
               type="button"
               onClick={() => navigate(-1)}
               aria-label="Back"
@@ -362,21 +460,28 @@ const Add = () => {
             </button>
           ) : (
             <Link
-              className="grid size-10 place-items-center"
+              className="grid size-10 place-items-center rounded-full bg-white"
               to="/"
               aria-label="Back to home"
             >
               <LuArrowLeft className="size-5" aria-hidden="true" />
             </Link>
           )}
-          <button className="px-2 py-2 text-sm" type="submit" disabled={saving || loadingRecipe}>
+          <button
+            className="grid h-10 place-items-center rounded-full bg-white px-5 text-sm disabled:opacity-60"
+            type="submit"
+            disabled={saving || loadingRecipe}
+          >
             {saving ? "Saving..." : loadingRecipe ? "Loading..." : "Save"}
           </button>
         </div>
 
         <section className="mt-7">
           <p className="font-serif text-4xl leading-none text-[#696555]">
-            {String(savedRecipeId ? recipeCount : recipeCount + 1).padStart(2, "0")}
+            {String(savedRecipeId ? recipeCount : recipeCount + 1).padStart(
+              2,
+              "0",
+            )}
           </p>
           <label className="mt-2 block">
             <span className="sr-only">Recipe name</span>
@@ -385,7 +490,7 @@ const Add = () => {
               value={recipeName}
               onChange={(event) => setRecipeName(event.target.value)}
               aria-label="Recipe name"
-              placeholder="Add title"
+              placeholder="Recipe draft"
               maxLength={80}
               required
             />
@@ -403,6 +508,17 @@ const Add = () => {
           </label>
         </section>
 
+        <section className="mt-8">
+          <h2 className="text-xl font-normal">About the recipe</h2>
+          <textarea
+            className="mt-5 min-h-32 w-full resize-y rounded-[28px] bg-[#F4F2EE] px-6 py-5 text-sm text-[#221B04] outline-none placeholder:text-[#B9B4A5] focus-visible:ring-2 focus-visible:ring-[#696555]"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Describe your recipe, its inspiration, or what makes it special..."
+            aria-label="About the recipe"
+          />
+        </section>
+
         <section className="mt-6" aria-label="Recipe ingredients">
           {loadingScents && (
             <p className="text-sm text-[#696555]">Loading scents...</p>
@@ -411,7 +527,7 @@ const Add = () => {
             {selectedScents.map((scent) => (
               <div className="min-w-0" key={scent.id}>
                 <div className="relative aspect-square">
-                  <div className="size-full overflow-hidden rounded-[20px] bg-[#D6D2C6]">
+                  <div className="size-full overflow-hidden rounded-[20px] bg-[#F4F2EE]">
                     {scent.image_url && (
                       <img
                         className="size-full object-cover"
@@ -446,7 +562,7 @@ const Add = () => {
 
         <section className="mt-9">
           <button
-            className="flex h-10 w-full items-center justify-center gap-3 rounded-[23.603px] bg-[#696555] text-xs text-[#D8D1C1] shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.25)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
+            className="flex h-10 w-full items-center justify-center gap-3 rounded-full bg-[#4B4631] text-xs text-[#A8A28B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
             type="button"
             onClick={() => setPickerOpen((current) => !current)}
             aria-expanded={pickerOpen}
@@ -493,6 +609,12 @@ const Add = () => {
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {scent.name}
                     </span>
+                    {favoriteIds.includes(scent.id) && (
+                      <LuHeart
+                        className="size-4 shrink-0 fill-current"
+                        aria-label="Favorite"
+                      />
+                    )}
                     <LuPlus className="size-4 shrink-0" aria-hidden="true" />
                   </button>
                 ))}
@@ -506,8 +628,8 @@ const Add = () => {
           )}
         </section>
 
-        <section className="mt-16">
-          <h2 className="font-serif text-2xl">Fragrance profile</h2>
+        <section className="mt-14">
+          <h2 className="text-xl font-normal">Fragrance profile</h2>
           <div className="mt-5 space-y-4">
             {profileFields.map((field) => (
               <label
@@ -516,7 +638,7 @@ const Add = () => {
               >
                 <span>{field.label}</span>
                 <input
-                  className="h-1 w-full cursor-pointer accent-[#221B04]"
+                  className="profile-slider w-full cursor-pointer"
                   type="range"
                   min="0"
                   max="100"
@@ -535,262 +657,226 @@ const Add = () => {
           </div>
         </section>
 
-        <section className="mt-16">
-          <h2 className="font-serif text-2xl">Notes</h2>
-          <textarea
-            className="mt-5 min-h-32 w-full resize-y rounded-[28px] bg-[#F4F2EE] px-6 py-5 text-sm text-[#221B04] outline-none focus-visible:ring-2 focus-visible:ring-[#696555]"
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            placeholder="Add notes on your process, your inspiration, thoughts or adjustments..."
-            aria-label="Recipe notes"
-          />
-        </section>
-
-        <section className="mt-12">
-          <h2 className="font-serif text-2xl">Equipment</h2>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {PRODUCTS.map((product) => {
-              const active = equipment.some(
-                (item) => item.toLowerCase() === product.name.toLowerCase(),
-              );
-              return (
-                <button
-                  className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-xs ${
-                    active ? "bg-[#696555] text-white" : "bg-[#F4F2EE]"
-                  }`}
-                  type="button"
-                  key={product.name}
-                  aria-pressed={active}
-                  onClick={() =>
-                    active
-                      ? setEquipment((current) =>
-                          current.filter(
-                            (item) =>
-                              item.toLowerCase() !== product.name.toLowerCase(),
-                          ),
-                        )
-                      : addEquipment(product.name)
-                  }
-                >
-                  <img
-                    className="size-7 rounded-full object-cover"
-                    src={product.image}
-                    alt=""
-                  />
-                  {product.name}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-4 flex gap-2">
-            <input
-              className="h-10 min-w-0 flex-1 rounded-full bg-[#F4F2EE] px-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#696555]"
-              value={customEquipment}
-              onChange={(event) => setCustomEquipment(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addEquipment(customEquipment);
-                  setCustomEquipment("");
-                }
-              }}
-              placeholder="Or type your own equipment"
-              aria-label="Custom equipment name"
-            />
-            <button
-              className="grid size-10 place-items-center rounded-[23.603px] bg-[#696555] text-[#D8D1C1] shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.25)]"
-              type="button"
-              aria-label="Add equipment"
-              onClick={() => {
-                addEquipment(customEquipment);
-                setCustomEquipment("");
-              }}
-            >
-              <LuPlus className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-          {equipment
-            .filter(
-              (name) =>
-                !PRODUCTS.some(
-                  (product) => product.name.toLowerCase() === name.toLowerCase(),
-                ),
-            )
-            .map((name) => (
-              <span
-                className="mr-2 mt-3 inline-flex items-center gap-2 rounded-full bg-[#696555] py-1 pl-4 pr-2 text-xs text-white"
-                key={name}
-              >
-                {name}
-                <button
-                  className="grid size-5 place-items-center rounded-full bg-white/20"
-                  type="button"
-                  aria-label={`Remove ${name}`}
-                  onClick={() =>
-                    setEquipment((current) =>
-                      current.filter((item) => item !== name),
-                    )
-                  }
-                >
-                  <LuX className="size-3" aria-hidden="true" />
-                </button>
-              </span>
-            ))}
-        </section>
-
-        <section className="mt-12" id="steps-section">
-          <h2 className="font-serif text-2xl">
-            Step by step <span className="text-base text-[#696555]">*</span>
-          </h2>
-          <ol className="mt-5 space-y-3">
-            {steps.map((step, index) => (
-              <li className="flex items-start gap-3" key={index}>
-                <span className="mt-3 grid size-6 shrink-0 place-items-center rounded-full bg-[#696555] text-xs text-white">
-                  {index + 1}
-                </span>
-                <textarea
-                  className="min-h-16 min-w-0 flex-1 resize-y rounded-[20px] bg-[#F4F2EE] px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#696555]"
-                  value={step}
-                  onChange={(event) =>
-                    setSteps((current) =>
-                      current.map((item, i) =>
-                        i === index ? event.target.value : item,
-                      ),
-                    )
-                  }
-                  placeholder={`Step ${index + 1}`}
-                  aria-label={`Step ${index + 1}`}
-                  required={index === 0}
-                />
-                {steps.length > 1 && (
-                  <button
-                    className="mt-3 grid size-6 shrink-0 place-items-center rounded-full bg-[#9B8461] text-white"
-                    type="button"
-                    aria-label={`Remove step ${index + 1}`}
-                    onClick={() =>
-                      setSteps((current) => current.filter((_, i) => i !== index))
-                    }
-                  >
-                    <LuMinus className="size-3" aria-hidden="true" />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ol>
-          <button
-            className="mt-5 flex h-10 w-full items-center justify-center gap-3 rounded-[23.603px] bg-[#696555] text-xs text-[#D8D1C1] shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.25)]"
-            type="button"
-            onClick={() => setSteps((current) => [...current, ""])}
-          >
-            Add step <LuPlus className="size-4" aria-hidden="true" />
-          </button>
-        </section>
-
-        <section className="mt-12">
-          <h2 className="font-serif text-2xl">Pairs well with</h2>
-          <div className="mt-6 grid grid-cols-3 gap-4 sm:max-w-md sm:gap-6">
-            {pairedScents.map((scent) => (
-              <div className="min-w-0" key={scent.id}>
-                <div className="relative aspect-square">
-                  <div className="size-full overflow-hidden rounded-[20px] bg-[#D6D2C6]">
-                    {scent.image_url && (
-                      <img
-                        className="size-full object-cover"
-                        src={scent.image_url}
-                        alt={scent.name}
-                      />
-                    )}
+        <section className="mt-14" id="steps-section">
+          <h2 className="text-xl font-normal">Recipe steps</h2>
+          <div className="mt-6 rounded-[28px] bg-[#F4F2EE] p-3.5">
+            <ol className="space-y-3">
+              {steps.map((step, index) => (
+                <li className="rounded-[20px] bg-[#EAE3D6] p-3.5" key={index}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold">
+                      Step {index + 1}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="rounded-full bg-[#D6D0C0] px-2.5 py-0.5 text-[11px] font-medium text-[#696555]">
+                        {index === 0 ? "Required" : "Optional"}
+                      </span>
+                      {steps.length > 1 && (
+                        <button
+                          className="grid size-5 place-items-center rounded-full bg-[#9B8461] text-white"
+                          type="button"
+                          aria-label={`Remove step ${index + 1}`}
+                          onClick={() =>
+                            setSteps((current) =>
+                              current.filter((_, i) => i !== index),
+                            )
+                          }
+                        >
+                          <LuMinus className="size-3" aria-hidden="true" />
+                        </button>
+                      )}
+                    </span>
                   </div>
-                  <button
-                    className="absolute -right-1 -top-1 z-10 grid size-8 place-items-center rounded-full bg-[#9B8461] text-white shadow-sm"
-                    type="button"
-                    aria-label={`Remove ${scent.name} pairing`}
-                    onClick={() =>
-                      setPairIds((current) =>
-                        current.filter((id) => id !== scent.id),
+                  <textarea
+                    className="mt-2 min-h-12 w-full resize-y bg-transparent text-sm outline-none placeholder:text-[#B9B4A5]"
+                    value={step}
+                    onChange={(event) =>
+                      setSteps((current) =>
+                        current.map((item, i) =>
+                          i === index ? event.target.value : item,
+                        ),
                       )
                     }
-                  >
-                    <LuMinus className="size-3" aria-hidden="true" />
-                  </button>
-                </div>
-                <p className="mt-2 truncate text-center text-xs text-[#696555]">
-                  {scent.name}
-                </p>
-              </div>
-            ))}
-            {pairedScents.length === 0 &&
-              [0, 1, 2].map((slot) => (
-                <div
-                  className="aspect-square rounded-[20px] bg-[#D6D2C6]"
-                  key={slot}
-                  aria-hidden="true"
-                />
+                    placeholder={
+                      index === 0
+                        ? "Describe the first step of your recipe..."
+                        : "Add the next action..."
+                    }
+                    aria-label={`Step ${index + 1}`}
+                    required={index === 0}
+                  />
+                </li>
               ))}
+            </ol>
+            <button
+              className="mt-3 flex h-11 w-full items-center justify-center gap-3 rounded-full bg-[#4B4631] text-xs text-[#A8A28B]"
+              type="button"
+              onClick={() => setSteps((current) => [...current, ""])}
+            >
+              Add step <LuPlus className="size-4" aria-hidden="true" />
+            </button>
           </div>
-          <button
-            className="mt-6 flex h-10 w-full items-center justify-center gap-3 rounded-[23.603px] bg-[#696555] text-xs text-[#D8D1C1] shadow-[0_3.147px_3.147px_0_rgba(0,0,0,0.25)]"
-            type="button"
-            onClick={() => setPairPickerOpen((current) => !current)}
-            aria-expanded={pairPickerOpen}
-          >
-            Add pairing <LuPlus className="size-4" aria-hidden="true" />
-          </button>
-          {pairPickerOpen && (
-            <div className="mt-3 rounded-2xl bg-[#F4F2EE] p-3">
-              <label className="flex h-10 items-center gap-2 rounded-full bg-white px-3">
-                <LuSearch
-                  className="size-4 shrink-0 text-[#696555]"
-                  aria-hidden="true"
-                />
-                <input
-                  className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                  value={pairSearch}
-                  onChange={(event) => setPairSearch(event.target.value)}
-                  placeholder="Search scents"
-                  aria-label="Search scents to pair"
-                />
-              </label>
-              <div className="mt-2 max-h-56 overflow-y-auto">
-                {availablePairs.map((scent) => (
-                  <button
-                    className="flex w-full items-center gap-3 px-2 py-2 text-left"
-                    type="button"
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-xl font-normal">Pairs well with</h2>
+          {isPremium ? (
+            <div className="mt-6 rounded-3xl bg-[#F4F2EE] p-3.5">
+              <span className="inline-block rounded-full bg-[#E2CFA3] px-3 py-1 text-xs font-semibold">
+                Neroli+
+              </span>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {shownPairs.map((scent) => (
+                  <div
+                    className="flex flex-col items-center gap-2 text-sm text-[#696555]"
                     key={scent.id}
-                    onClick={() => {
-                      setPairIds((current) => [...current, scent.id]);
-                      setPairSearch("");
-                      setPairPickerOpen(false);
-                    }}
                   >
-                    <span className="size-10 shrink-0 overflow-hidden rounded-xl bg-[#D6D2C6]">
+                    <span className="block aspect-square w-full overflow-hidden rounded-3xl bg-[#EAE3D6]">
                       {scent.image_url && (
                         <img
                           className="size-full object-cover"
                           src={scent.image_url}
                           alt=""
-                          loading="lazy"
                         />
                       )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-sm">
-                      {scent.name}
-                    </span>
-                    <LuPlus className="size-4 shrink-0" aria-hidden="true" />
-                  </button>
+                    <span className="line-clamp-1">{scent.name}</span>
+                  </div>
                 ))}
-                {availablePairs.length === 0 && (
-                  <p className="px-2 py-3 text-sm text-[#696555]">
-                    No matching scents.
-                  </p>
-                )}
               </div>
             </div>
+          ) : (
+            <Link
+              className="mt-6 block rounded-3xl bg-[#F4F2EE] p-3.5"
+              to="/premium"
+            >
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-[#E2CFA3] px-3 py-1 text-xs font-semibold">
+                  Neroli+
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full bg-[#D6D0C0] px-3 py-1 text-xs text-[#696555]">
+                  <LuLock className="size-3.5" aria-hidden="true" />
+                  Locked
+                </span>
+              </div>
+              <p className="mt-4 text-sm font-semibold">Pairs well with</p>
+              <p className="mt-2 text-xs text-[#696555]">
+                Unlock premium pairing suggestions with Neroli+.
+              </p>
+            </Link>
           )}
         </section>
 
-        <section className="mt-16">
-          <h2 className="font-serif text-2xl">Media</h2>
+        <section className="mt-14">
+          <h2 className="text-xl font-normal">Equipment used</h2>
+          <div className="mt-6 rounded-[28px] bg-[#F4F2EE] p-3.5">
+            {!equipmentOpen && equipment.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {equipment.map((name) => (
+                  <span
+                    className="inline-flex items-center gap-2 rounded-full bg-[#EAE3D6] py-1.5 pl-3.5 pr-2 text-xs"
+                    key={name}
+                  >
+                    {name}
+                    <button
+                      className="grid size-4 place-items-center rounded-full bg-[#696555]/15"
+                      type="button"
+                      aria-label={`Remove ${name}`}
+                      onClick={() => toggleEquipment(name)}
+                    >
+                      <LuX className="size-3" aria-hidden="true" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <button
+              className="flex h-11 w-full items-center justify-center gap-3 rounded-full bg-[#4B4631] text-xs text-[#A8A28B]"
+              type="button"
+              onClick={() => setEquipmentOpen((open) => !open)}
+              aria-expanded={equipmentOpen}
+            >
+              {equipmentOpen ? "Done" : "Add equipment"}
+              {equipmentOpen ? (
+                <LuX className="size-4" aria-hidden="true" />
+              ) : (
+                <LuPlus className="size-4" aria-hidden="true" />
+              )}
+            </button>
+            {equipmentOpen && (
+              <div className="mt-3">
+                <div className="flex flex-col items-start gap-2">
+                  {[
+                    ...PRODUCTS,
+                    ...equipment
+                      .filter(
+                        (name) =>
+                          !PRODUCTS.some(
+                            (product) =>
+                              product.name.toLowerCase() === name.toLowerCase(),
+                          ),
+                      )
+                      .map((name) => ({ name })),
+                  ].map((product) => {
+                    const active = hasEquipment(product.name);
+                    return (
+                      <button
+                        className={`flex items-center gap-3 rounded-full py-1 pl-1 pr-5 text-sm ${
+                          active
+                            ? "bg-[#4B4631] text-[#E8E2D6]"
+                            : "bg-[#EAE3D6]"
+                        } ${product.image ? "" : "pl-5"}`}
+                        type="button"
+                        key={product.name}
+                        aria-pressed={active}
+                        onClick={() => toggleEquipment(product.name)}
+                      >
+                        {product.image && (
+                          <img
+                            className="size-9 rounded-full bg-white object-cover"
+                            src={product.image}
+                            alt=""
+                          />
+                        )}
+                        {product.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    className="h-10 min-w-0 flex-1 rounded-full bg-[#EAE3D6] px-4 text-sm outline-none placeholder:text-[#B9B4A5] focus-visible:ring-2 focus-visible:ring-[#696555]"
+                    value={customEquipment}
+                    onChange={(event) => setCustomEquipment(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        addEquipment(customEquipment);
+                        setCustomEquipment("");
+                      }
+                    }}
+                    placeholder="Or type your own equipment"
+                    aria-label="Custom equipment name"
+                  />
+                  <button
+                    className="grid size-10 place-items-center rounded-full bg-[#4B4631] text-[#A8A28B]"
+                    type="button"
+                    aria-label="Add equipment"
+                    onClick={() => {
+                      addEquipment(customEquipment);
+                      setCustomEquipment("");
+                    }}
+                  >
+                    <LuPlus className="size-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-xl font-normal">Media</h2>
           <input
             ref={fileInputRef}
             className="sr-only"
@@ -807,9 +893,18 @@ const Add = () => {
                 <div className="relative aspect-square" key={item.url}>
                   <div className="size-full overflow-hidden rounded-[20px] bg-[#D6D2C6]">
                     {item.type === "video" ? (
-                      <video className="size-full object-cover" src={item.url} muted playsInline />
+                      <video
+                        className="size-full object-cover"
+                        src={item.url}
+                        controls
+                        playsInline
+                      />
                     ) : (
-                      <img className="size-full object-cover" src={item.url} alt="" />
+                      <img
+                        className="size-full object-cover"
+                        src={item.url}
+                        alt=""
+                      />
                     )}
                   </div>
                   <button
@@ -837,7 +932,7 @@ const Add = () => {
                       <video
                         className="size-full object-cover"
                         src={item.url}
-                        muted
+                        controls
                         playsInline
                       />
                     ) : (
@@ -861,16 +956,100 @@ const Add = () => {
             </div>
           )}
           <button
-            className="mx-auto mt-6 flex h-31 w-full max-w-78 flex-col items-center justify-center gap-3 rounded-[28px] bg-[#F4F2EE] text-xs text-[#696555] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-6 flex h-31 w-full flex-col items-center justify-center gap-3 rounded-[28px] bg-[#F4F2EE] text-[11px] text-[#B9B4A5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04] disabled:cursor-not-allowed disabled:opacity-60"
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={mediaItems.length + existingMedia.length >= MAX_MEDIA_FILES}
+            disabled={
+              mediaItems.length + existingMedia.length >= MAX_MEDIA_FILES
+            }
           >
             <span className="grid size-10 place-items-center rounded-full bg-white text-[#8B826B]">
               <LuPlus className="size-5" aria-hidden="true" />
             </span>
             Add photo/video
           </button>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-xl font-normal">Cover photo</h2>
+          <p className="mt-3 text-xs text-[#696555]">
+            Shown as the preview of your recipe.
+          </p>
+          <input
+            ref={coverInput}
+            className="sr-only"
+            type="file"
+            accept="image/*"
+            onChange={pickCover}
+            aria-label="Choose cover photo"
+            tabIndex={-1}
+          />
+          <div className="mt-5 flex items-center gap-4">
+            <img
+              className="size-24 rounded-[20px] bg-[#D6D2C6] object-cover"
+              src={shownCover}
+              onError={(event) => {
+                if (!event.currentTarget.src.endsWith(defaultCoverImage)) {
+                  event.currentTarget.src = defaultCoverImage;
+                }
+              }}
+              alt="Cover preview"
+            />
+            <div className="flex flex-col items-start gap-2">
+              <button
+                className="rounded-full bg-[#4B4631] px-5 py-2 text-xs text-[#E8E2D6]"
+                type="button"
+                onClick={() => coverInput.current?.click()}
+              >
+                Choose from device
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-xl font-normal">Recipe visibility</h2>
+          <div
+            className="mt-5 space-y-2 rounded-[28px] bg-[#F4F2EE] p-3"
+            role="radiogroup"
+            aria-label="Recipe visibility"
+          >
+            {[
+              {
+                value: false,
+                label: "Private",
+                text: "Only you can see this recipe.",
+              },
+              {
+                value: true,
+                label: "Public",
+                text: "Anyone can discover and view this recipe.",
+              },
+            ].map((option) => (
+              <button
+                className="flex w-full items-center gap-3 rounded-[20px] bg-[#E8E2D6] p-4 text-left"
+                type="button"
+                role="radio"
+                aria-checked={isPublic === option.value}
+                key={option.label}
+                onClick={() => setIsPublic(option.value)}
+              >
+                <span className="grid size-5 shrink-0 place-items-center rounded-full border-2 border-[#696555]">
+                  {isPublic === option.value && (
+                    <span className="size-2.5 rounded-full bg-[#696555]" />
+                  )}
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold">
+                    {option.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-[#696555]">
+                    {option.text}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
         </section>
 
         {error && (
@@ -883,6 +1062,23 @@ const Add = () => {
             {message}
           </p>
         )}
+
+        <div className="mt-12 space-y-3 px-3">
+          <button
+            className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#D6CFBC] text-sm font-medium disabled:opacity-60"
+            type="submit"
+            disabled={saving || loadingRecipe}
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+          <button
+            className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#221B04] text-sm font-medium text-white"
+            type="button"
+            onClick={() => (editId ? navigate(-1) : navigate("/"))}
+          >
+            Discard
+          </button>
+        </div>
       </form>
     </main>
   );
