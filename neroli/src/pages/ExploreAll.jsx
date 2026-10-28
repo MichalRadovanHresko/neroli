@@ -33,11 +33,12 @@ const ExploreAll = () => {
   const userId = session?.user?.id;
   const { resolveIngredient } = useScents();
   const type = searchParams.get("type") ?? "premium";
+  const favoritesOnly = searchParams.get("favorites") === "1";
   const searchText = (searchParams.get("q") ?? "").trim().toLowerCase();
   const [items, setItems] = useState([]);
   const [loadedKey, setLoadedKey] = useState("");
   const [error, setError] = useState("");
-  const requestKey = `${type}:${userId ?? ""}`;
+  const requestKey = `${type}:${userId ?? ""}:${favoritesOnly}`;
   const loading = loadedKey !== requestKey;
 
   useEffect(() => {
@@ -45,7 +46,22 @@ const ExploreAll = () => {
 
     const load = async () => {
       let request;
-      if (type === "scents") {
+      if (type === "scents" && favoritesOnly) {
+        const { data: favorites } = userId
+          ? await supabase
+              .from("scent_favorites")
+              .select("scent_id")
+              .eq("user_id", userId)
+          : { data: [] };
+        request = supabase
+          .from("scents")
+          .select("id, name, image_url, scent_family, short_description")
+          .in(
+            "id",
+            (favorites ?? []).map((favorite) => favorite.scent_id),
+          )
+          .order("name");
+      } else if (type === "scents") {
         request = supabase
           .from("scents")
           .select("id, name, image_url, scent_family, short_description")
@@ -68,7 +84,7 @@ const ExploreAll = () => {
         request = supabase
           .from("recipes")
           .select(COLUMNS)
-          .eq("is_premade", true)
+          .or("is_premade.eq.true,is_public.eq.true")
           .order("created_at", { ascending: false });
       }
 
@@ -83,11 +99,15 @@ const ExploreAll = () => {
     return () => {
       isCurrent = false;
     };
-  }, [type, userId, requestKey]);
+  }, [type, userId, requestKey, favoritesOnly]);
 
   const isScents = type === "scents";
   const activeTab = RECIPE_TABS.find((tab) => tab.type === type);
-  const title = isScents ? "Scents" : (activeTab?.title ?? "Recipes");
+  const title = isScents
+    ? favoritesOnly
+      ? "Favourite scents"
+      : "Scents"
+    : (activeTab?.title ?? "Recipes");
 
   const visible = items.filter((item) =>
     matches(
@@ -181,7 +201,7 @@ const ExploreAll = () => {
                   className="flex items-center gap-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04]"
                   to={row.to}
                 >
-                  <div className="h-[116px] w-[106px] shrink-0 overflow-hidden rounded-[20px] bg-[#D6D2C6]">
+                  <div className="h-29 w-26.5 shrink-0 overflow-hidden rounded-[20px] bg-[#D6D2C6]">
                     {row.image && (
                       <img
                         className="size-full object-cover"

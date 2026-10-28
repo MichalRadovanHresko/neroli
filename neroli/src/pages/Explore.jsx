@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { LuArrowLeft, LuChevronDown, LuFilter, LuSearch } from "react-icons/lu";
+import { LuArrowLeft, LuChevronDown, LuSearch } from "react-icons/lu";
 import supabase from "../lib/supabase";
 import { useScents } from "../lib/scents";
 import { useAuth } from "../context/AuthContext.js";
 
 const FILTERS = ["All", "Floral", "Woody", "Fresh", "Oriental"];
-
-const SORTS = [
-  { id: "newest", label: "Newest" },
-  { id: "name", label: "Name A-Z" },
-];
 
 const getIngredientNames = (recipe) =>
   (recipe.ingredients ?? []).map((ingredient) => ingredient.name);
@@ -87,7 +82,6 @@ const Explore = () => {
   const [error, setError] = useState(null);
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [filter, setFilter] = useState("All");
-  const [sort, setSort] = useState("newest");
   const [scents, setScents] = useState([]);
   const [premiumRecipes, setPremiumRecipes] = useState([]);
 
@@ -117,7 +111,7 @@ const Explore = () => {
         supabase
           .from("recipes")
           .select(columns)
-          .eq("is_premade", true)
+          .or("is_premade.eq.true,is_public.eq.true")
           .order("created_at", { ascending: false }),
         userId
           ? supabase
@@ -159,9 +153,7 @@ const Explore = () => {
     (filter === "All" || matchesText(recipe, filter.toLowerCase())) &&
     (!searchText || matchesText(recipe, searchText));
 
-  const visibleRecipes = recipes
-    .filter(matchesFilters)
-    .sort((a, b) => (sort === "name" ? a.name.localeCompare(b.name) : 0));
+  const visibleRecipes = recipes.filter(matchesFilters);
   const visiblePremium = premiumRecipes.filter(matchesFilters);
   const visibleMyRecipes = myRecipes.filter(matchesFilters);
 
@@ -180,9 +172,6 @@ const Explore = () => {
   const shownScents = visibleScents.slice(0, PREVIEW_COUNT);
   const shownPremium = visiblePremium.slice(0, PREVIEW_COUNT);
   const shownMyRecipes = visibleMyRecipes.slice(0, PREVIEW_COUNT);
-  const sortLabel = SORTS.find((option) => option.id === sort)?.label;
-  const toggleSort = () =>
-    setSort((current) => (current === "newest" ? "name" : "newest"));
 
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-4 pb-36 pt-5 text-[#221B04] sm:px-10">
@@ -197,15 +186,7 @@ const Explore = () => {
             <LuArrowLeft className="size-5" aria-hidden="true" />
           </button>
           <h1 className="text-center text-base font-medium">Explore</h1>
-          <button
-            className="grid size-10 place-items-center rounded-full bg-[#F7F5F0]"
-            type="button"
-            onClick={toggleSort}
-            aria-label={`Sort recipes: ${sortLabel}. Press to change`}
-            title={`Sort: ${sortLabel}`}
-          >
-            <LuFilter className="size-5" aria-hidden="true" />
-          </button>
+          <span />
         </header>
 
         <label className="mt-5 flex h-11 items-center gap-3 rounded-full bg-[#F7F5F0] px-4 shadow-[0_2px_8px_rgba(34,27,4,0.08)]">
@@ -328,11 +309,7 @@ const Explore = () => {
               >
                 <SectionHeading
                   title="My recipes"
-                  action={
-                    visibleMyRecipes.length > PREVIEW_COUNT && (
-                      <SeeAll type="mine" query={searchText} />
-                    )
-                  }
+                  action={<SeeAll type="mine" query={searchText} />}
                 />
                 {visibleMyRecipes.length === 0 ? (
                   <p className="mt-4 text-sm text-[#221B04]/70">
@@ -364,11 +341,7 @@ const Explore = () => {
             >
               <SectionHeading
                 title="Community recipes"
-                action={
-                  visibleRecipes.length > PREVIEW_COUNT && (
-                    <SeeAll type="community" query={searchText} />
-                  )
-                }
+                action={<SeeAll type="community" query={searchText} />}
               />
 
               {visibleRecipes.length === 0 ? (
