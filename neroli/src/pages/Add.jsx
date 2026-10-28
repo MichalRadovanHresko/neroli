@@ -445,28 +445,29 @@ const Add = () => {
     }
   };
 
+  const confirmLeave = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to leave? Unsaved changes will be lost.",
+      )
+    ) {
+      if (editId) navigate(-1);
+      else navigate("/");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-6 pb-32 pt-5 text-[#221B04] sm:px-10">
       <form className="mx-auto max-w-3xl" onSubmit={saveRecipe}>
         <div className="flex items-center justify-between">
-          {editId ? (
-            <button
-              className="grid size-10 place-items-center rounded-full bg-white"
-              type="button"
-              onClick={() => navigate(-1)}
-              aria-label="Back"
-            >
-              <LuArrowLeft className="size-5" aria-hidden="true" />
-            </button>
-          ) : (
-            <Link
-              className="grid size-10 place-items-center rounded-full bg-white"
-              to="/"
-              aria-label="Back to home"
-            >
-              <LuArrowLeft className="size-5" aria-hidden="true" />
-            </Link>
-          )}
+          <button
+            className="grid size-10 place-items-center rounded-full bg-white"
+            type="button"
+            onClick={confirmLeave}
+            aria-label="Back"
+          >
+            <LuArrowLeft className="size-5" aria-hidden="true" />
+          </button>
           <button
             className="grid h-10 place-items-center rounded-full bg-white px-5 text-sm disabled:opacity-60"
             type="submit"

@@ -278,7 +278,7 @@ const Profile = () => {
   return (
     <main className="min-h-screen bg-[#EAE3D6] pb-56 text-[#221B04]">
       <div className="mx-auto max-w-3xl">
-        <header className="relative h-93 overflow-hidden bg-[#D8D1C1] text-[#F7F5F0]">
+        <header className="relative h-97 overflow-hidden bg-[#D8D1C1] text-[#F7F5F0]">
           <img
             className="absolute inset-0 size-full object-cover"
             src={heroImage}
@@ -332,7 +332,9 @@ const Profile = () => {
                 alt="Profile picture"
               />
             </div>
-            <h1 className="mt-5 text-xl">{getDisplayName(user)}</h1>
+            <h1 className="mt-4 rounded-2xl bg-white px-10 py-2 text-lg text-[#696555]">
+              {getDisplayName(user)}
+            </h1>
           </div>
 
           <div className="absolute inset-x-5 bottom-6 grid grid-cols-3 gap-4 rounded-[28px] bg-[#F7F5F0]/95 px-6 py-4 text-[#221B04] shadow-[0_2px_10px_rgba(34,27,4,0.1)]">
