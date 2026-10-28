@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LuArrowLeft,
@@ -8,8 +8,6 @@ import {
   LuMessageCircle,
   LuUser,
 } from "react-icons/lu";
-import supabase from "../lib/supabase";
-import { useAuth } from "../context/AuthContext.js";
 import { resolveAvatar } from "../lib/avatars";
 
 const FILTERS = ["All", "Activity", "Comments"];
@@ -150,85 +148,7 @@ const BADGES = {
 
 const Notifications = () => {
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const userId = session?.user?.id;
   const [filter, setFilter] = useState("All");
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    const load = async () => {
-      if (!userId) return;
-      const { data: recipes } = await supabase
-        .from("recipes")
-        .select("id, name, image_url")
-        .eq("user_id", userId)
-        .eq("is_premade", false);
-      const mine = new Map(
-        (recipes ?? []).map((recipe) => [recipe.id, recipe]),
-      );
-      const ids = [...mine.keys()];
-
-      const [commentsResult, savesResult] = ids.length
-        ? await Promise.all([
-            supabase
-              .from("recipe_comments")
-              .select("*")
-              .in("recipe_id", ids)
-              .neq("user_id", userId)
-              .order("created_at", { ascending: false })
-              .limit(30),
-            supabase
-              .from("recipe_saves")
-              .select("*")
-              .in("recipe_id", ids)
-              .neq("user_id", userId)
-              .order("created_at", { ascending: false })
-              .limit(30),
-          ])
-        : [{ data: [] }, { data: [] }];
-
-      if (!isCurrent) return;
-
-      const comments = (commentsResult.data ?? []).map((comment) => ({
-        id: `c-${comment.id}`,
-        kind: "comment",
-        name: comment.author_name || "Someone",
-        action: "commented on your recipe",
-        quote: `“${comment.body}”`,
-        recipe: mine.get(comment.recipe_id),
-        avatar: resolveAvatar(
-          comment.author_avatar,
-          comment.user_id ?? comment.author_name,
-        ),
-        date: comment.created_at,
-      }));
-
-      const saves = (savesResult.data ?? []).map((save) => ({
-        id: `s-${save.id ?? `${save.user_id}-${save.recipe_id}`}`,
-        kind: "save",
-        name: "Someone",
-        action: "saved your recipe",
-        recipe: mine.get(save.recipe_id),
-        avatar: resolveAvatar(null, save.user_id),
-        date: save.created_at,
-      }));
-
-      setItems(
-        [...comments, ...saves]
-          .filter((item) => item.date)
-          .sort((a, b) => new Date(b.date) - new Date(a.date)),
-      );
-      setLoading(false);
-    };
-
-    void load();
-    return () => {
-      isCurrent = false;
-    };
-  }, [userId, session]);
 
   const premade = PREMADE.map((item) => ({
     ...item,
@@ -236,9 +156,7 @@ const Notifications = () => {
     recipe: item.recipeName ? { name: item.recipeName } : undefined,
   }));
 
-  const all = [...items, ...premade].sort(
-    (a, b) => new Date(b.date) - new Date(a.date),
-  );
+  const all = premade.sort((a, b) => new Date(b.date) - new Date(a.date));
   const visible = all.filter((item) => {
     if (filter === "Activity") return item.kind !== "comment";
     if (filter === "Comments") return item.kind === "comment";
@@ -282,10 +200,6 @@ const Notifications = () => {
           </button>
         ))}
       </div>
-
-      {loading && (
-        <p className="mt-8 text-sm text-[#696555]">Loading notifications...</p>
-      )}
 
       {groups.map((group) => (
         <section className="mt-7" key={group.label}>
@@ -356,7 +270,7 @@ const Notifications = () => {
         </section>
       ))}
 
-      {!loading && visible.length === 0 && (
+      {visible.length === 0 && (
         <p className="mt-8 text-sm text-[#696555]">Nothing here yet.</p>
       )}
     </main>
