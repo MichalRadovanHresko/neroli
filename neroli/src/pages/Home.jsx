@@ -3,10 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 import supabase from "../lib/supabase";
 import { useScents } from "../lib/scents";
-import PromoDialog from "../components/home/PromoDialog";
 import HeroSection from "../components/home/HeroSection";
 import FavoritesSection from "../components/home/FavoritesSection";
-import IngredientsSection from "../components/home/IngredientsSection";
 import ExploreByNote from "../components/home/ExploreByNote";
 import MyRecipesSection from "../components/home/MyRecipesSection";
 import PremiumSection from "../components/home/PremiumSection";
@@ -17,22 +15,12 @@ import GuideSection from "../components/home/GuideSection";
 const Home = () => {
   const navigate = useNavigate();
   const { resolveIngredient } = useScents();
-  const { session, isPremium } = useAuth();
-  // Show the premium introduction once per browser session.
-  const [promoOpen, setPromoOpen] = useState(
-    () => !sessionStorage.getItem("neroli-plus-promo"),
-  );
-  // Remember the dismissal and hide the promotion for this session.
-  const closePromo = () => {
-    sessionStorage.setItem("neroli-plus-promo", "1");
-    setPromoOpen(false);
-  };
+  const { session } = useAuth();
   // Keep the latest user recipes and scent selections for home-page cards.
   const userId = session?.user?.id;
   const [favoriteScent, setFavoriteScent] = useState(null);
   const [favoritesLoading, setFavoritesLoading] = useState(true);
   const [recipeScents, setRecipeScents] = useState([]);
-  const [ingredientScents, setIngredientScents] = useState([]);
   const [craftedScent, setCraftedScent] = useState(null);
   const [myRecipes, setMyRecipes] = useState([]);
 
@@ -82,15 +70,6 @@ const Home = () => {
         }
         setRecipeScents(shuffledScents.slice(0, 3));
         setCraftedScent(shuffledScents[3] ?? shuffledScents[0]);
-        setIngredientScents(
-          ["Clove", "Wild Berries", "Apricot"]
-            .map((name) =>
-              shuffledScents.find(
-                (scent) => scent.name.toLowerCase() === name.toLowerCase(),
-              ),
-            )
-            .filter(Boolean),
-        );
       });
 
     return () => {
@@ -161,8 +140,6 @@ const Home = () => {
   // Render the featured content in separate, reusable sections.
   return (
     <main className="overflow-hidden bg-[#EAE3D6] text-[#221B04]">
-      {/* Offer the premium dialog only when it has not been dismissed. */}
-      {promoOpen && !isPremium && <PromoDialog closePromo={closePromo} />}
       <HeroSection navigate={navigate} />
 
       {/* Group the personalized collections beneath the hero. */}
@@ -170,9 +147,6 @@ const Home = () => {
         {/* Show saved content after the favorite lookup finishes. */}
         {!favoritesLoading && favoriteScent && (
           <FavoritesSection favoriteScent={favoriteScent} navigate={navigate} />
-        )}
-        {ingredientScents.length > 0 && (
-          <IngredientsSection ingredientScents={ingredientScents} />
         )}
         <ExploreByNote />
 
