@@ -1,3 +1,4 @@
+// Display scent details, related scents, recipes, and favorite controls.
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { LuArrowUpRight, LuChevronLeft } from "react-icons/lu";
@@ -5,11 +6,13 @@ import FavoriteButton from "../components/FavoriteButton";
 import { useAuth } from "../context/AuthContext.js";
 import supabase from "../lib/supabase";
 
+// Convert scent labels into positions for the detail-page meters.
 const INTENSITY = { Light: 35, Medium: 60, Strong: 85 };
 const NOTE = { Top: 35, Middle: 60, Base: 85 };
 const FRESH_FAMILIES = ["citrus", "fresh", "green", "aquatic", "herbal"];
 const WARM_FAMILIES = ["gourmand", "woody", "spicy", "leather", "tobacco"];
 
+// Estimate freshness from the scent family for the visual scent card.
 const freshness = (family = "") => {
   const text = family.toLowerCase();
   if (FRESH_FAMILIES.some((key) => text.includes(key))) return 85;
@@ -17,6 +20,7 @@ const freshness = (family = "") => {
   return 55;
 };
 
+// Render one labeled meter used by the scent profile card.
 const Meter = ({ label, value }) => (
   <div className="flex items-center gap-4 text-sm text-[#696555]">
     <span className="w-20 shrink-0">{label}</span>
@@ -30,6 +34,7 @@ const Meter = ({ label, value }) => (
   </div>
 );
 
+// Link to a row of scents that share a family or pair well together.
 const ScentRow = ({ title, items }) =>
   items.length > 0 && (
     <section className="mt-10">
@@ -58,6 +63,7 @@ const ScentRow = ({ title, items }) =>
     </section>
   );
 
+// Fetch the selected scent and build its related content.
 const ScentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -72,6 +78,7 @@ const ScentDetail = () => {
   const [allScents, setAllScents] = useState([]);
   const [featured, setFeatured] = useState([]);
 
+  // Load other scents for family matches and recipe image fallbacks.
   useEffect(() => {
     let isCurrent = true;
     supabase
@@ -86,6 +93,7 @@ const ScentDetail = () => {
     };
   }, []);
 
+  // Find public recipes that use this scent for the featured section.
   useEffect(() => {
     if (!scent) return;
     let isCurrent = true;
@@ -116,6 +124,7 @@ const ScentDetail = () => {
     };
   }, [scent]);
 
+  // Fetch details whenever the route points to a different scent.
   useEffect(() => {
     let isCurrent = true;
 
@@ -138,6 +147,7 @@ const ScentDetail = () => {
     };
   }, [id]);
 
+  // Check whether the signed-in user has saved this scent.
   useEffect(() => {
     let isCurrent = true;
 
@@ -162,6 +172,7 @@ const ScentDetail = () => {
     };
   }, [id, userId]);
 
+  // Add or remove this scent from the signed-in user’s favorites.
   const toggleFavorite = async () => {
     if (!userId || !scent || favoritePending) return;
 
@@ -183,6 +194,7 @@ const ScentDetail = () => {
     setFavoritePending(false);
   };
 
+  // Prepare related scent groups, labels, and profile values for display.
   const families = (scent?.scent_family ?? "")
     .split("/")
     .map((item) => item.trim())
@@ -217,6 +229,7 @@ const ScentDetail = () => {
         <p className="px-6 pt-8 text-sm text-[#221B04]/70">Scent not found.</p>
       )}
 
+      {/* Render the full detail card only after the scent record is available. */}
       {scent && (
         <article className="mx-auto max-w-3xl">
           <div className="relative h-[62vh] max-h-140 min-h-95 bg-[#D6D2C6]">
@@ -275,6 +288,7 @@ const ScentDetail = () => {
               ))}
             </div>
 
+            {/* Visualize scent characteristics and show related content. */}
             <section className="mt-10">
               <h2 className="text-xl font-normal">Scent card</h2>
               <div className="mt-4 space-y-4">
@@ -290,6 +304,7 @@ const ScentDetail = () => {
             <ScentRow title="Common in" items={commonIn} />
             <ScentRow title="Pairs well with" items={pairs} />
 
+            {/* Link to recipes that feature this scent. */}
             {featured.length > 0 && (
               <section className="mt-10">
                 <div className="flex items-end justify-between">

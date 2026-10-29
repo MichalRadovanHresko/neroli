@@ -1,16 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Prata&display=swap");
 @import "tailwindcss";
 
+/* Configure shared fonts and the app’s base page styles. */
+
 @theme {
   --font-sans: "Montserrat", sans-serif;
-  --font-scent: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-scent:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 :root {
-  color: #221B04;
-  background: #D8D1C1;
+  color: #221b04;
+  background: #d8d1c1;
   font-family: "Montserrat", sans-serif;
   font-synthesis: none;
   font-weight: 400;
@@ -25,50 +28,25 @@ body {
   margin: 0;
 }
 
+/* Provide the display serif face used by brand headings. */
 .font-serif {
   font-family: "Prata", Georgia, serif;
 }
 
+/* Keep form controls consistent with the chosen app font. */
 button,
 input {
   font: inherit;
 }
 
+/* Ensure buttons inherit the application text color. */
 @layer base {
   button {
     color: inherit;
   }
 }
 
-.liquid-glass {
-  background: rgba(255, 255, 255, 0.55);
-  -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.1);
-  backdrop-filter: url(#glass-distortion) blur(2px) saturate(1.8) brightness(1.1);
-  box-shadow:
-    inset 1.5px 1.5px 1px rgba(255, 255, 255, 0.7),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.4),
-    0 8px 32px rgba(0, 0, 0, 0.18);
-}
-
-.liquid-glass-panel {
-  background: rgba(255, 255, 255, 1);
-  border: 1px solid rgba(255, 255, 255, 0.68);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  backdrop-filter: blur(16px) saturate(1.6);
-  box-shadow:
-    inset 1px 1px 1px rgba(255, 255, 255, 0.85),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.38),
-    0 6px 18px rgba(34, 27, 4, 0.12);
-}
-
-.liquid-glass-active {
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow:
-    inset 1px 1px 1px rgba(255, 255, 255, 0.8),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
+/* Fix the main navigation to the bottom, including device safe areas. */
 .bottom-nav {
   position: fixed;
   inset-inline: 0;
@@ -82,6 +60,7 @@ input {
   background: #f5f3ee;
 }
 
+/* Center each navigation destination inside its equal-width slot. */
 .bottom-nav__item {
   display: flex;
   height: 3.5rem;
@@ -95,7 +74,9 @@ input {
   cursor: pointer;
 }
 
-.bottom-nav__item[aria-current="page"] .bottom-nav__icon:not(.bottom-nav__add-icon)::after {
+/* Mark the current destination with a small dot beneath its icon. */
+.bottom-nav__item[aria-current="page"]
+  .bottom-nav__icon:not(.bottom-nav__add-icon)::after {
   content: "";
   position: absolute;
   top: calc(100% + 0.25rem);
@@ -107,6 +88,7 @@ input {
   transform: translateX(-50%);
 }
 
+/* Size and align icons, including the highlighted add action. */
 .bottom-nav__icon {
   position: relative;
   display: flex;
@@ -127,6 +109,7 @@ input {
   stroke: #f5f3ee;
 }
 
+/* Keep labels available to assistive technology while hiding them visually. */
 .bottom-nav__label {
   position: absolute;
   width: 1px;
@@ -137,6 +120,7 @@ input {
   clip-path: inset(50%);
 }
 
+/* Style the preference sliders used when building a scent profile. */
 .profile-slider {
   appearance: none;
   height: 16px;

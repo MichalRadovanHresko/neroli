@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { LuArrowRight } from "react-icons/lu";
 import backgroundImage from "../assets/images/404.jpg";
 
+// Show a friendly recovery page when a route does not exist.
 const NotFound = () => (
   <main className="fixed inset-0 z-40 overflow-hidden bg-[#EAE3D6] text-[#221B04]">
     <img
@@ -10,6 +11,7 @@ const NotFound = () => (
       alt=""
     />
 
+    {/* Center the error message and give visitors a route back home. */}
     <div className="relative flex h-full flex-col items-center justify-center px-6 pb-24 text-center">
       <h1 className="font-serif text-[120px] leading-none text-[#4B4631] sm:text-[160px]">
         404

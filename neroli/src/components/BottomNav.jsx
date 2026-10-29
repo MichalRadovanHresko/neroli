@@ -1,7 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { AddIcon, HomeIcon, ProfileIcon, ScentsIcon, ShopIcon } from "./Icons";
 
+// Provide the app’s persistent links for its main sections.
+
 const BottomNav = () => {
+  // Keep each navigation destination paired with its label and icon.
   const TABS = [
     { id: "home", path: "/", label: "Home", Icon: HomeIcon },
     { id: "scents", path: "/scents", label: "Explore", Icon: ScentsIcon },
@@ -11,6 +14,7 @@ const BottomNav = () => {
   ];
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  // Highlight the tab that best matches the current route.
   const found = TABS.findIndex(
     (t) =>
       t.path === pathname ||
@@ -23,6 +27,7 @@ const BottomNav = () => {
   const tab = TABS[index].id;
   return (
     <nav aria-label="Main navigation" className="bottom-nav">
+      {/* Render each destination as a button with its current-page state. */}
       {TABS.map((t) => (
         <button
           key={t.id}

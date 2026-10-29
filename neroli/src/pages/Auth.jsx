@@ -1,14 +1,18 @@
+// Sign users in or create an account using the authentication context.
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import heroImage from "../assets/images/loginPage.png";
 import { useAuth } from "../context/AuthContext.js";
 
+// Demo credentials support trying the app without creating an account.
 const DEMO_EMAIL = "test@gmail.com";
 const DEMO_PASSWORD = "test123";
 
+// Share one accessible style across the account form fields.
 const inputClass =
   "h-12 w-full rounded-full bg-[#F7F5F0]/90 px-5 text-sm text-[#221B04] outline-none placeholder:text-[#696555] focus-visible:outline-2 focus-visible:outline-[#696555]";
 
+// Track form fields and send the selected authentication request.
 const Auth = () => {
   const navigate = useNavigate();
   const {
@@ -36,6 +40,7 @@ const Auth = () => {
 
   if (session) return <Navigate to="/" replace />;
 
+  // Handle sign-up, regular sign-in, and demo sign-in in one place.
   const submit = async (credentials) => {
     setError("");
     setNotice("");
@@ -70,6 +75,7 @@ const Auth = () => {
     }
   };
 
+  // Show the branded form and account actions when no session is active.
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#D8D1C1] text-[#221B04]">
       <img
@@ -82,6 +88,7 @@ const Auth = () => {
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col items-center px-6 pt-[32vh] text-center">
         <h1 className="font-serif text-[60px] leading-none">NÉROLI</h1>
         <p className="mt-3 font-serif text-lg">“Your scent, your story”</p>
+        {/* Collect credentials and submit them through the auth context. */}
         <form
           className="mt-[10vh] flex w-full flex-col items-center gap-3"
           onSubmit={(event) => {
@@ -131,6 +138,7 @@ const Auth = () => {
                 ? "Create account"
                 : "Log in"}
           </button>
+          {/* Show request feedback and let the user switch account modes. */}
           {error && (
             <p className="text-sm text-red-800" role="alert">
               {error}
@@ -148,6 +156,7 @@ const Auth = () => {
           >
             {isSignUp ? "Already have an account?" : "Create an account"}
           </button>
+          {/* Demo sign-in is available only in the regular login mode. */}
           {!isSignUp && (
             <button
               className="text-xs text-[#221B04]/70 underline underline-offset-2"

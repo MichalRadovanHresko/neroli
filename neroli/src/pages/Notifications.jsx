@@ -10,12 +10,15 @@ import {
 } from "react-icons/lu";
 import { resolveAvatar } from "../lib/avatars";
 
+// Display recent activity grouped by date and filtered by type.
+// Keep the available filters together for the filter buttons.
 const FILTERS = ["All", "Activity", "Comments"];
 const DAY = 24 * 60 * 60 * 1000;
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const MIN = 60 * 1000;
 const HOUR = 60 * MIN;
 
+// Provide sample activity rows for the notifications feed.
 const PREMADE = [
   {
     id: "p1",
@@ -119,6 +122,7 @@ const PREMADE = [
   },
 ];
 
+// Format a notification timestamp as a compact relative time.
 const timeAgo = (value) => {
   const diff = Date.now() - new Date(value).getTime();
   const minutes = Math.floor(diff / 60000);
@@ -130,6 +134,7 @@ const timeAgo = (value) => {
   return days === 1 ? "Yesterday" : `${days}d`;
 };
 
+// Place each notification into its day-based heading.
 const groupOf = (value) => {
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const time = new Date(value).getTime();
@@ -138,6 +143,7 @@ const groupOf = (value) => {
   return "Earlier";
 };
 
+// Match each notification type to the icon shown on its avatar.
 const BADGES = {
   save: LuBookmark,
   comment: LuMessageCircle,
@@ -146,8 +152,10 @@ const BADGES = {
   news: LuMegaphone,
 };
 
+// Prepare feed rows for the selected filter and date groups.
 const Notifications = () => {
   const navigate = useNavigate();
+  // Prepare display avatars, apply the selected filter, and group by date.
   const [filter, setFilter] = useState("All");
 
   const premade = PREMADE.map((item) => ({
@@ -170,6 +178,7 @@ const Notifications = () => {
     }))
     .filter((group) => group.rows.length > 0);
 
+  // Render the feed header, filters, grouped activity, and empty state.
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-6 pb-8 pt-10 text-[#221B04]">
       <div className="relative flex items-center justify-center">
@@ -184,6 +193,7 @@ const Notifications = () => {
         <h1 className="font-serif text-[30px] leading-tight">Notifications</h1>
       </div>
 
+      {/* Let people narrow the feed to activity or comments. */}
       <div className="mt-6 flex gap-3 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
         {FILTERS.map((name) => (
           <button
@@ -201,6 +211,7 @@ const Notifications = () => {
         ))}
       </div>
 
+      {/* Each non-empty date group gets its own heading and list. */}
       {groups.map((group) => (
         <section className="mt-7" key={group.label}>
           <h2 className="text-xs uppercase tracking-[0.15em] text-[#696555]">

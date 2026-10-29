@@ -1,3 +1,4 @@
+// Browse and search recipes and scents across the community and premium sections.
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { LuArrowLeft, LuChevronDown, LuSearch } from "react-icons/lu";
@@ -5,11 +6,14 @@ import supabase from "../lib/supabase";
 import { useScents } from "../lib/scents";
 import { useAuth } from "../context/AuthContext.js";
 
+// Categories narrow recipe and scent results by fragrance family.
 const FILTERS = ["All", "Floral", "Woody", "Fresh", "Oriental"];
 
+// Collect ingredient names for compact summaries in recipe cards.
 const getIngredientNames = (recipe) =>
   (recipe.ingredients ?? []).map((ingredient) => ingredient.name);
 
+// Use a recipe image or fall back to an ingredient image when needed.
 const getRecipeImage = (recipe, resolveIngredient) =>
   recipe.image_url ||
   (recipe.ingredients ?? [])
@@ -17,6 +21,7 @@ const getRecipeImage = (recipe, resolveIngredient) =>
     .find((ingredient) => ingredient.image_url)?.image_url ||
   null;
 
+// Search the recipe title, description, tags, badges, and ingredients.
 const matchesText = (recipe, text) =>
   [
     recipe.name,
@@ -28,6 +33,7 @@ const matchesText = (recipe, text) =>
     .filter(Boolean)
     .some((value) => value.toLowerCase().includes(text));
 
+// Reusable compact row for results that link to a detail page.
 const ListRow = ({ to, image, title, subtitle, dark = false }) => (
   <Link
     className={`flex items-center gap-4 rounded-[20px] p-2.5 shadow-[0_2px_6px_rgba(34,27,4,0.06)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#221B04] ${
@@ -52,6 +58,7 @@ const ListRow = ({ to, image, title, subtitle, dark = false }) => (
   </Link>
 );
 
+// Keep collection titles and their optional See all links aligned.
 const SectionHeading = ({ title, action }) => (
   <div className="flex items-baseline justify-between gap-4">
     <h2 className="text-xl font-medium">{title}</h2>
@@ -59,6 +66,7 @@ const SectionHeading = ({ title, action }) => (
   </div>
 );
 
+// Link to a full result list while preserving the active search query.
 const SeeAll = ({ type, query }) => (
   <Link
     className="shrink-0 border-b border-[#221B04] text-xs"
@@ -70,6 +78,7 @@ const SeeAll = ({ type, query }) => (
 
 const PREVIEW_COUNT = 3;
 
+// Load browse data, apply search filters, and show each collection.
 const Explore = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -85,6 +94,7 @@ const Explore = () => {
   const [scents, setScents] = useState([]);
   const [premiumRecipes, setPremiumRecipes] = useState([]);
 
+  // Fetch scents separately so they can be browsed with recipe results.
   useEffect(() => {
     let isCurrent = true;
 
@@ -101,6 +111,7 @@ const Explore = () => {
     };
   }, []);
 
+  // Load community, personal, and premium recipes together for the page.
   useEffect(() => {
     let isCurrent = true;
 
@@ -146,6 +157,7 @@ const Explore = () => {
     };
   }, [userId]);
 
+  // Derive the visible lists from the current search text and family filter.
   const featured = premiumRecipes[0];
   const searchText = query.trim().toLowerCase();
 
@@ -176,6 +188,7 @@ const Explore = () => {
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-4 pb-36 pt-5 text-[#221B04] sm:px-10">
       <div className="mx-auto max-w-3xl">
+        {/* Top navigation and search controls for the browse page. */}
         <header className="grid grid-cols-[40px_1fr_40px] items-center">
           <button
             className="grid size-10 place-items-center rounded-full bg-[#F7F5F0]"
@@ -189,6 +202,7 @@ const Explore = () => {
           <span />
         </header>
 
+        {/* Search across recipes and scents without leaving the browse page. */}
         <label className="mt-5 flex h-11 items-center gap-3 rounded-full bg-[#F7F5F0] px-4 shadow-[0_2px_8px_rgba(34,27,4,0.08)]">
           <LuSearch
             className="size-5 shrink-0 text-[#8d897a]"
@@ -204,6 +218,7 @@ const Explore = () => {
           />
         </label>
 
+        {/* Narrow collections by a broad fragrance family. */}
         <div
           className="-mx-4 mt-4 overflow-x-auto px-4 sm:-mx-10 sm:px-10"
           style={{ scrollbarWidth: "none" }}
@@ -226,6 +241,7 @@ const Explore = () => {
           </div>
         </div>
 
+        {/* Loading and query errors are shown before the result collections. */}
         {loading && (
           <p className="mt-8 text-sm text-[#221B04]/70">Loading recipes...</p>
         )}
@@ -235,6 +251,7 @@ const Explore = () => {
           </p>
         )}
 
+        {/* Highlight the newest premium recipe when no search is active. */}
         {!loading && !error && featured && !searchText && (
           <section className="mt-6" aria-label="Neroli's selection">
             <SectionHeading
@@ -273,6 +290,7 @@ const Explore = () => {
           </section>
         )}
 
+        {/* Show matching recipes and scents in separate browse sections. */}
         <div className="flex flex-col">
           {!loading && !error && searchText && visiblePremium.length > 0 && (
             <section className="order-0 mt-10" aria-label="Premium recipes">
@@ -334,6 +352,7 @@ const Explore = () => {
               </section>
             )}
 
+          {/* Community recipes are the main public collection. */}
           {!loading && !error && (
             <section
               className={`mt-12 ${"order-1"}`}
@@ -365,6 +384,7 @@ const Explore = () => {
             </section>
           )}
 
+          {/* Scents use the same search and category filters as recipes. */}
           {visibleScents.length > 0 && (
             <section className="order-3 mt-12" aria-label="Explore scents">
               <SectionHeading

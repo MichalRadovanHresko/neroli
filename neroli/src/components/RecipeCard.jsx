@@ -1,3 +1,4 @@
+// Display scent images and key details in a reusable recipe card.
 export default function RecipeCard({
   image_url,
   name,
@@ -8,6 +9,7 @@ export default function RecipeCard({
 }) {
   return (
     <article className="overflow-hidden rounded-2xl bg-[#D6D2C6] text-[#221B04]">
+      {/* Show the image only when one is available, then display scent details. */}
       {image_url && (
         <img
           className="aspect-[1.35] w-full object-cover"
@@ -16,6 +18,7 @@ export default function RecipeCard({
           loading="lazy"
         />
       )}
+      {/* Show scent metadata and description beneath the optional image. */}
       <div className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-3">
           <h2 className="font-scent text-2xl leading-tight">{name}</h2>

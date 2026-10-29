@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext.js";
 import supabase from "./supabase";
 
+// Build scent insights from the user’s preferences and recipe activity.
+
+// Map onboarding answers to scent families used for recommendations.
 const LIKE_FAMILY = {
   Floral: "floral",
   "Fresh & citrusy": "citrus",
@@ -11,12 +14,14 @@ const LIKE_FAMILY = {
   "Spicy & warm": "spicy",
 };
 
+// Track scent families the user prefers to avoid.
 const AVOID_FAMILY = {
   "Very sweet scents": "gourmand",
   "Strong floral scents": "floral",
   "Smoky or leathery scents": "leather",
 };
 
+// Provide display names and short descriptions for each scent family.
 export const FAMILY_STYLE = {
   gourmand: { title: "Sweet & Gourmand", line: "a sweet tooth" },
   woody: { title: "Warm & Woody", line: "warmth" },
@@ -29,8 +34,10 @@ export const FAMILY_STYLE = {
   green: { title: "Green & Herbal", line: "green things" },
 };
 
+// Normalize labels so scent names can be compared consistently.
 const normalize = (value) => value?.trim().toLowerCase() ?? "";
 
+// Find which known families are present in a scent family label.
 const familiesOf = (scent) =>
   Object.keys(FAMILY_STYLE).filter((key) =>
     normalize(scent?.scent_family).includes(key),
@@ -47,6 +54,7 @@ export const useScentInsights = () => {
   const [ownCount, setOwnCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Load the user’s owned and saved recipes alongside the scent catalogue.
   useEffect(() => {
     if (!userId) return;
     let isCurrent = true;
@@ -86,6 +94,7 @@ export const useScentInsights = () => {
     };
   }, [userId]);
 
+  // Score scent families and ingredients to build the user’s profile.
   const insights = useMemo(() => {
     const scentByName = new Map(
       scents.map((scent) => [normalize(scent.name), scent]),
@@ -99,6 +108,7 @@ export const useScentInsights = () => {
       );
     };
 
+    // Translate preferences into family and note signals for scoring.
     const likedFamilies = (preferences?.likes ?? [])
       .map((like) => LIKE_FAMILY[like])
       .filter(Boolean);
@@ -107,6 +117,7 @@ export const useScentInsights = () => {
       .filter(Boolean);
     const likedNotes = (preferences?.notes ?? []).map(normalize);
 
+    // Count ingredients and accumulate family scores from recipe activity.
     const noteCounts = new Map();
     const familyScores = new Map();
     const addFamily = (family, points) =>
@@ -132,6 +143,7 @@ export const useScentInsights = () => {
       familiesOf(scent).forEach((family) => addFamily(family, 1));
     });
 
+    // Rank the most-used notes and calculate their share of recipe ingredients.
     const totalNotes = [...noteCounts.values()].reduce(
       (sum, entry) => sum + entry.count,
       0,
@@ -149,6 +161,7 @@ export const useScentInsights = () => {
         .filter(([family]) => !avoidedFamilies.includes(family))
         .sort((a, b) => b[1] - a[1])[0] ?? [];
 
+    // Give each owned recipe a score based on the user’s preferences.
     const scoreRecipe = (recipe) =>
       (recipe.ingredients ?? []).reduce((sum, ingredient) => {
         const scent = findScent(ingredient.name);
@@ -162,6 +175,7 @@ export const useScentInsights = () => {
         return sum + points;
       }, 0) + (recipe.own ? 1 : 0);
 
+    // Select the strongest owned recipes and choose representative images.
     const topCreations = recipes
       .filter((recipe) => recipe.own)
       .sort((a, b) => scoreRecipe(b) - scoreRecipe(a))
@@ -176,6 +190,7 @@ export const useScentInsights = () => {
           null,
       }));
 
+    // Pick a hero image that matches the highest-scoring family when possible.
     const heroScent =
       scents.find(
         (scent) => scent.image_url && familiesOf(scent).includes(topFamily),

@@ -1,3 +1,4 @@
+// Browse shop products and safe purchase links, with searchable categories.
 import { useEffect, useState } from "react";
 import { LuSearch } from "react-icons/lu";
 
@@ -5,6 +6,7 @@ import scentImage from "../assets/images/scent.jpg";
 import { PRODUCTS } from "../lib/shopProducts";
 import supabase from "../lib/supabase";
 
+// Product categories shown in the shop filter.
 const CATEGORIES = [
   "All",
   "Essential oils",
@@ -12,6 +14,7 @@ const CATEGORIES = [
   "Fragrance",
 ];
 
+// Reject unsafe product links and provide a search link when none is set.
 const getPurchaseUrl = (product) => {
   if (product.purchaseUrl === undefined) {
     return `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product.name)}`;
@@ -28,6 +31,7 @@ const getPurchaseUrl = (product) => {
   }
 };
 
+// Load available scent products and filter them for the shop display.
 const Shop = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +39,7 @@ const Shop = () => {
   const [scentsLoading, setScentsLoading] = useState(true);
   const [scentsError, setScentsError] = useState(null);
 
+  // Fetch the scent products used in the essential oils category.
   useEffect(() => {
     let isCurrent = true;
 
@@ -56,6 +61,7 @@ const Shop = () => {
     };
   }, []);
 
+  // Build filtered product lists for the selected category and search text.
   const query = searchQuery.trim().toLowerCase();
   const matches = (product) => product.name.toLowerCase().includes(query);
   const showOils =
@@ -78,6 +84,7 @@ const Shop = () => {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-5 pb-8 pt-14 sm:px-10">
+      {/* Search and category controls shape the shop results below. */}
       <h1 className="font-serif text-[32px] uppercase leading-tight">Shop</h1>
       <div className="mt-6 space-y-5">
         <div className="relative flex items-center gap-3">
@@ -120,6 +127,7 @@ const Shop = () => {
           </div>
         </div>
 
+        {/* Tools are displayed as product cards with validated purchase links. */}
         {equipmentProducts.length > 0 && activeCategory === "All" && (
           <h2 className="text-xl font-normal">Tools &amp; Accessories</h2>
         )}
@@ -194,6 +202,7 @@ const Shop = () => {
           </ul>
         )}
 
+        {/* Load or list essential oils after the equipment cards. */}
         {showOils && scentsLoading ? (
           <p className="rounded-3xl bg-white/45 px-5 py-8 text-center text-sm text-[#716b58]">
             Loading essential oils...
@@ -267,6 +276,7 @@ const Shop = () => {
           )
         )}
 
+        {/* Explain when a category has no matching or available products. */}
         {!hasAny && !(showOils && (scentsLoading || scentsError)) && (
           <p className="rounded-3xl bg-white/45 px-5 py-8 text-center text-sm text-[#716b58]">
             {isKnownCategory

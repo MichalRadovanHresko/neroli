@@ -3,6 +3,8 @@ import { FAMILY_STYLE, useScentInsights } from "../lib/insights";
 import { useAuth } from "../context/AuthContext.js";
 import BackButton from "../components/BackButton";
 
+// Present premium members with a personalized annual scent summary.
+// Draw the small decorative bars on the annual scent summary.
 const Bars = () => (
   <div className="flex items-end gap-1.5" aria-hidden="true">
     {[28, 40, 32, 20].map((height) => (
@@ -15,19 +17,23 @@ const Bars = () => (
   </div>
 );
 
+// Load and present the user’s annual scent insight data.
 const ScentWrapped = () => {
   const { isPremium } = useAuth();
   const { topNotes, topFamily, heroScent, ownCount, loading } =
     useScentInsights();
 
+  // Send non-members to the premium page before showing personal insights.
   if (!isPremium) return <Navigate to="/premium" replace />;
 
+  // Use a discovery message if no leading scent family has been identified.
   const style = FAMILY_STYLE[topFamily] ?? {
     title: "Still discovering",
     line: "discovery",
   };
   const topNote = topNotes[0];
 
+  // Render the family summary, top note, and number of created blends.
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-6 pb-32 pt-14.5 text-[#221B04]">
       <div className="mx-auto max-w-md">
@@ -38,10 +44,12 @@ const ScentWrapped = () => {
           </p>
         </div>
 
+        {/* Show a loading message until the personalized recap is available. */}
         {loading ? (
           <p className="mt-10 text-center text-sm text-[#696555]">Loading...</p>
         ) : (
           <>
+            {/* Summarize the leading family before the detailed statistics. */}
             <h1 className="mt-6 text-center font-serif text-[40px] leading-[1.1]">
               You have a thing for {style.line}.
             </h1>

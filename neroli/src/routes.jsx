@@ -18,13 +18,18 @@ import ScentProfile from "./pages/ScentProfile";
 import ScentWrapped from "./pages/ScentWrapped";
 import Shop from "./pages/Shop";
 
+// Define public, protected, and shared-layout routes for the application.
+
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Send legacy signup links to sign-in and keep sign-in publicly reachable. */}
       <Route path="signup" element={<Navigate to="/signin" replace />} />
       <Route path="signin" element={<Auth />} />
+      {/* Protect the app pages and redirect new accounts to onboarding. */}
       <Route element={<RequireAuth />}>
         <Route path="onboarding" element={<Onboarding />} />
+        {/* Wrap the main app pages in shared navigation and header UI. */}
         <Route element={<AppLayout />}>
           <Route index element={<Home />} />
           <Route path="scents" element={<Explore />} />

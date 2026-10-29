@@ -1,3 +1,4 @@
+// Show a searchable full list of scents or recipes selected by the URL.
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { LuArrowLeft } from "react-icons/lu";
@@ -5,6 +6,7 @@ import supabase from "../lib/supabase";
 import { useScents } from "../lib/scents";
 import { useAuth } from "../context/AuthContext.js";
 
+// Tabs group the recipe lists available on the full browse page.
 const RECIPE_TABS = [
   { type: "premium", label: "Neroli+", title: "Exclusive recipes" },
   { type: "community", label: "Community", title: "Community recipes" },
@@ -14,10 +16,12 @@ const RECIPE_TABS = [
 const COLUMNS =
   "id, name, image_url, short_description, badges, profile_tags, ingredients, created_at";
 
+// Check searchable fields without failing when an item has missing values.
 const matches = (values, text) =>
   !text ||
   values.filter(Boolean).some((value) => value.toLowerCase().includes(text));
 
+// Gather every recipe field that can match the search text.
 const recipeValues = (recipe) => [
   recipe.name,
   recipe.short_description,
@@ -26,6 +30,7 @@ const recipeValues = (recipe) => [
   ...(recipe.ingredients ?? []).map((ingredient) => ingredient.name),
 ];
 
+// Fetch the selected collection and filter it using URL search parameters.
 const ExploreAll = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -41,6 +46,7 @@ const ExploreAll = () => {
   const requestKey = `${type}:${userId ?? ""}:${favoritesOnly}`;
   const loading = loadedKey !== requestKey;
 
+  // Load only the collection requested by the current URL parameters.
   useEffect(() => {
     let isCurrent = true;
 
@@ -101,6 +107,7 @@ const ExploreAll = () => {
     };
   }, [type, userId, requestKey, favoritesOnly]);
 
+  // Derive the heading and visible list from the chosen collection and query.
   const isScents = type === "scents";
   const activeTab = RECIPE_TABS.find((tab) => tab.type === type);
   const title = isScents
@@ -145,11 +152,13 @@ const ExploreAll = () => {
     };
   };
 
+  // Keep the search term when switching between recipe tabs.
   const tabLink = (tab) =>
     `/explore/all?type=${tab}${searchText ? `&q=${encodeURIComponent(searchText)}` : ""}`;
 
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-6 pb-8 pt-4 text-[#221B04]">
+      {/* Back navigation and the heading identify the selected collection. */}
       <button
         className="grid size-10 place-items-center rounded-full bg-white"
         type="button"
@@ -159,8 +168,10 @@ const ExploreAll = () => {
         <LuArrowLeft className="size-5" aria-hidden="true" />
       </button>
 
+      {/* State which collection is open and offer related recipe tabs. */}
       <h1 className="mt-4 font-serif text-[32px] leading-tight">{title}</h1>
 
+      {/* Recipe tabs let users switch lists without losing the search query. */}
       {!isScents && (
         <div className="mt-6 flex gap-3 overflow-x-auto">
           {RECIPE_TABS.map((tab) => (
@@ -181,6 +192,7 @@ const ExploreAll = () => {
         </div>
       )}
 
+      {/* Present loading, errors, and empty results before the list. */}
       {loading && <p className="mt-8 text-sm text-[#221B04]/70">Loading...</p>}
       {error && (
         <p className="mt-8 text-sm text-red-800" role="alert">
@@ -191,6 +203,7 @@ const ExploreAll = () => {
         <p className="mt-8 text-sm text-[#221B04]/70">Nothing found.</p>
       )}
 
+      {/* Each row links to the matching scent or recipe detail page. */}
       <ul className="mt-6 space-y-4">
         {!loading &&
           visible.map((item) => {

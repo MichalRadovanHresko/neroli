@@ -2,8 +2,12 @@ import { Link } from "react-router-dom";
 import { LuBell } from "react-icons/lu";
 import { ProfileIcon } from "./Icons";
 
+// Show the brand link and shortcuts to notifications and the profile.
+
 const Header = () => (
+  // Keep global account shortcuts available from pages with the shared header.
   <header className="relative z-40 -mb-22 flex h-22 items-center justify-between bg-transparent px-6 text-[#221B04] sm:px-10 lg:px-[max(4rem,calc((100vw-1180px)/2))]">
+    {/* Link the brand name to home and group account shortcuts on the right. */}
     <Link
       className="font-serif text-[30px] leading-none no-underline sm:text-[34px]"
       to="/"

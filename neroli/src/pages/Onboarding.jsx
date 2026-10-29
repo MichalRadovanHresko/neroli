@@ -1,8 +1,10 @@
+// Collect scent preferences to personalize the user’s experience.
 import { useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import heroImage from "../assets/images/loginPage.png";
 import { useAuth } from "../context/AuthContext.js";
 
+// Define the questions and answer choices shown in the onboarding flow.
 const STEPS = [
   {
     key: "likes",
@@ -59,8 +61,10 @@ const STEPS = [
   },
 ];
 
+// Apply the same soft depth to onboarding buttons.
 const buttonShadow = "shadow-[0_3px_4px_rgba(34,27,4,0.25)]";
 
+// Show the welcome and completion screens before or after the questions.
 const Splash = ({ title, text, onStart, disabled, error }) => (
   <main className="relative min-h-screen overflow-hidden bg-[#D8D1C1] text-[#221B04]">
     <img
@@ -93,6 +97,7 @@ const Splash = ({ title, text, onStart, disabled, error }) => (
   </main>
 );
 
+// Track answers, save preferences, and move between onboarding steps.
 const Onboarding = () => {
   const navigate = useNavigate();
   const { session, needsOnboarding, completeOnboarding } = useAuth();
@@ -147,6 +152,7 @@ const Onboarding = () => {
   const step = STEPS[index];
   const selected = answers[step.key] ?? (step.multiple ? [] : "");
 
+  // Add or remove an answer, depending on whether the question is multiple-choice.
   const choose = (option) =>
     setAnswers((current) => {
       if (!step.multiple) return { ...current, [step.key]: option };
@@ -162,6 +168,7 @@ const Onboarding = () => {
   const isSelected = (option) =>
     step.multiple ? selected.includes(option) : selected === option;
 
+  // Save all selected preferences and return to the right destination.
   const finish = async () => {
     setError("");
     setSaving(true);
@@ -179,6 +186,7 @@ const Onboarding = () => {
     }
   };
 
+  // Advance to the next question or save after the final answer.
   const next = () => {
     if (index < STEPS.length - 1) setIndex(index + 1);
     else void finish();
@@ -189,9 +197,11 @@ const Onboarding = () => {
       active ? "bg-[#D6D2C6] ring-2 ring-[#696555]" : "bg-[#F4F2EE]"
     }`;
 
+  // Render the progress bar, current question, and navigation controls.
   return (
     <main className="min-h-screen bg-[#EAE3D6] text-[#221B04]">
       <section className="mx-auto flex min-h-screen w-full max-w-md flex-col px-8 pb-12 pt-18">
+        {/* Progress shows how many questions remain in the flow. */}
         <div className="flex gap-1.5" aria-hidden="true">
           {STEPS.map((item, position) => (
             <span
@@ -207,6 +217,7 @@ const Onboarding = () => {
           {step.title}
         </h1>
 
+        {/* Let users choose answers and optionally enter another note. */}
         <div className="mt-14 space-y-3.5">
           {step.options.map((option) => (
             <button
@@ -239,6 +250,7 @@ const Onboarding = () => {
           </p>
         )}
 
+        {/* Save, continue, or return to an earlier question. */}
         <div className="mt-auto flex gap-4 pt-10">
           {(index > 0 || editing) && (
             <button

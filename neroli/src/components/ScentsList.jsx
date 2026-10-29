@@ -1,3 +1,4 @@
+// List scents with favorite filters and buttons for saving favorites.
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
@@ -5,6 +6,7 @@ import FavoriteButton from "./FavoriteButton";
 import RecipeCard from "./RecipeCard";
 import supabase from "../lib/supabase";
 
+// Fetch scent data and keep favorite changes in sync with Supabase.
 const ScentsList = () => {
   const { session } = useAuth();
   const userId = session?.user?.id;
@@ -16,6 +18,7 @@ const ScentsList = () => {
   const [pendingId, setPendingId] = useState(null);
   const [filter, setFilter] = useState("all");
 
+  // Load scents and the current user’s favorites together.
   useEffect(() => {
     let isCurrent = true;
 
@@ -52,6 +55,7 @@ const ScentsList = () => {
     };
   }, [userId]);
 
+  // Persist a favorite change and update the local list after success.
   const toggleFavorite = async (scent) => {
     if (!userId || pendingId !== null) return;
 
@@ -83,6 +87,7 @@ const ScentsList = () => {
     setPendingId(null);
   };
 
+  // Apply the selected all-or-favorites filter to the scent list.
   const visibleScents =
     filter === "favorites"
       ? scents.filter((scent) => favoriteIds.has(scent.id))
@@ -90,6 +95,7 @@ const ScentsList = () => {
 
   return (
     <>
+      {/* Report loading errors before showing the filter and scent cards. */}
       {error && <p>{error}</p>}
       {favoriteError && (
         <p className="mt-4 text-sm text-red-800" role="alert">
@@ -131,6 +137,7 @@ const ScentsList = () => {
               No favorites yet. Tap a heart on a scent to save it here.
             </p>
           )}
+          {/* Each scent card links to details and exposes its favorite action. */}
           <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {visibleScents.map((scent) => {
               const isFavorite = favoriteIds.has(scent.id);

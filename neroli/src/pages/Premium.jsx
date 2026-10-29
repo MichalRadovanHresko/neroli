@@ -8,6 +8,8 @@ import {
 } from "react-icons/lu";
 import premiumBackground from "../assets/images/premium-background.jpg";
 
+// Introduce the premium membership and summarize its main benefits.
+// Describe the tools and insights included with a premium membership.
 const FEATURES = [
   {
     icon: LuFlaskConical,
@@ -31,6 +33,7 @@ const FEATURES = [
   },
 ];
 
+// Lay out the membership introduction, call to action, and feature list.
 const Premium = () => (
   <main className="fixed inset-0 z-50 overflow-y-auto bg-[#1A150B] text-[#E5D9BE]">
     <div className="relative mx-auto min-h-260 w-full max-w-100.5">
@@ -41,6 +44,7 @@ const Premium = () => (
       />
       <div className="absolute inset-x-0 top-0 h-149 bg-[linear-gradient(180deg,rgba(26,21,11,0)_55%,rgba(26,21,11,0.85)_100%),linear-gradient(90deg,rgba(26,21,11,0.92)_0%,rgba(26,21,11,0.8)_55%,rgba(26,21,11,0.1)_100%)]" />
 
+      {/* Place membership details and the feature list over the background. */}
       <div className="relative px-8 pt-13.75 pb-24">
         <Link
           className="grid size-10 place-items-center rounded-full bg-[#E5D9BE] text-[#221B04]"

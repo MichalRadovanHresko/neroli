@@ -3,6 +3,8 @@ import glassesImage from "../assets/images/shop/glasses.jpg";
 import pipetteImage from "../assets/images/shop/pippet.jpg";
 import scaleImage from "../assets/images/shop/scale.png";
 
+// Keep shop item names, images, and purchase links together for equipment cards.
+
 export const PRODUCTS = [
   {
     name: "Pipette Dropper",
@@ -27,11 +29,17 @@ export const PRODUCTS = [
   },
 ];
 
+// Find a product by name without relying on letter casing or extra spaces.
 export const findShopProduct = (name) =>
   PRODUCTS.find(
-    (product) => product.name.toLowerCase() === String(name ?? "").trim().toLowerCase(),
+    (product) =>
+      product.name.toLowerCase() ===
+      String(name ?? "")
+        .trim()
+        .toLowerCase(),
   );
 
+// Add the matching catalogue image to equipment when one is available.
 export const resolveEquipment = (item) => {
   const product = findShopProduct(item.name);
   return product ? { ...item, image_url: product.image } : item;

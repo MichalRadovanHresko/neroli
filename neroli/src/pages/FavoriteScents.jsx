@@ -10,8 +10,11 @@ import BackButton from "../components/BackButton";
 import supabase from "../lib/supabase";
 import { useAuth } from "../context/AuthContext.js";
 
+// Summarize favorite scents using the user’s recipe and save history.
+// Compare scent names without differences in whitespace or capitalization.
 const normalize = (value) => value?.trim().toLowerCase() ?? "";
 
+// Count recipes whose ingredients include the given scent.
 const countIn = (recipes, scent) =>
   recipes.filter((recipe) =>
     (recipe.ingredients ?? []).some(
@@ -19,14 +22,17 @@ const countIn = (recipes, scent) =>
     ),
   ).length;
 
+// Summarize favorite scents across the user’s recipes and saved recipes.
 const FavoriteScents = () => {
   const { session } = useAuth();
   const userId = session?.user?.id;
+  // Store favorite scents and recipe sets while the page loads.
   const [favorites, setFavorites] = useState([]);
   const [own, setOwn] = useState([]);
   const [saved, setSaved] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Load favorites and recipe ingredients together to build scent insights.
   useEffect(() => {
     if (!userId) return;
     let isCurrent = true;
@@ -74,6 +80,7 @@ const FavoriteScents = () => {
     };
   }, [userId]);
 
+  // Score favorites by recipe use and saved recipes, then build chart values.
   const stats = useMemo(() => {
     const rows = favorites.map((scent) => {
       const used = countIn(own, scent);
@@ -108,6 +115,7 @@ const FavoriteScents = () => {
     };
   }, [favorites, own, saved]);
 
+  // Pick a short label for each scent based on how it appears in recipes.
   const { signature } = stats;
   const caption = (row) =>
     row.used
@@ -116,6 +124,7 @@ const FavoriteScents = () => {
         ? `Saved in ${row.inSaved} recipe${row.inSaved === 1 ? "" : "s"}`
         : "Favourite";
 
+  // Show the signature scent first, followed by notes and discovery insights.
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#EDE6DA_0%,#E4DAC8_100%)] px-5 pb-8 pt-4 text-[#221B04]">
       <div className="relative flex items-center justify-center">
@@ -141,6 +150,7 @@ const FavoriteScents = () => {
         </p>
       )}
 
+      {/* The remaining insights are useful once at least one favorite exists. */}
       {signature && (
         <>
           <section className="relative mt-6 flex min-h-44 overflow-hidden rounded-[28px] bg-[#D9C8AC]">

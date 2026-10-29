@@ -4,18 +4,23 @@ import { useScentInsights } from "../lib/insights";
 import { useAuth } from "../context/AuthContext.js";
 import BackButton from "../components/BackButton";
 
+// Show premium members their most-used notes and favorite creations.
+// Show a cropped scent image, leaving an empty placeholder when unavailable.
 const Thumb = ({ src, className }) => (
   <span className={`block shrink-0 overflow-hidden bg-[#D6D2C6] ${className}`}>
     {src && <img className="size-full object-cover" src={src} alt="" />}
   </span>
 );
 
+// Organize the ranked notes and favorite recipe creations.
 const ScentProfile = () => {
   const { isPremium } = useAuth();
   const { topNotes, topCreations, loading } = useScentInsights();
 
+  // Send non-members to the premium page before showing personal insights.
   if (!isPremium) return <Navigate to="/premium" replace />;
 
+  // Separate note statistics from the ranked list of recipe creations.
   return (
     <main className="min-h-screen bg-[#EAE3D6] px-5 pb-32 pt-14.5 text-[#221B04]">
       <div className="mx-auto max-w-md">
@@ -24,10 +29,12 @@ const ScentProfile = () => {
           <h1 className="font-serif text-xl">Your scent profile</h1>
         </div>
 
+        {/* Keep the profile layout hidden until the insights finish loading. */}
         {loading ? (
           <p className="mt-10 text-center text-sm text-[#696555]">Loading...</p>
         ) : (
           <>
+            {/* Rank notes by how often they appear in the user’s activity. */}
             <section className="mt-6 rounded-3xl bg-[#F4F2EE] p-5">
               <h2 className="font-serif text-xl">Most used notes</h2>
               {topNotes.length === 0 ? (
@@ -54,6 +61,7 @@ const ScentProfile = () => {
               )}
             </section>
 
+            {/* Link the top recipe creations in their ranking order. */}
             <section className="mt-4 rounded-3xl bg-[#F4F2EE] p-5">
               <h2 className="font-serif text-xl">Your top creations</h2>
               {topCreations.length === 0 ? (
